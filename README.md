@@ -1,7 +1,7 @@
 # HTML Skeleton
 
 HTML Skeleton is a minimal HTML5, plain CSS, and vanilla JavaScript starting point
-for framework-free websites. Serve the website files directly: no framework,
+for framework-free websites. Serve `site/` directly: no framework,
 application runtime, bundler, or build step is required.
 
 The project is at **0.1.0**, a pre-1.0 baseline. It is not a finished theme or
@@ -13,7 +13,8 @@ the initial scope.
 Choose **Use this template** on
 [HTML Skeleton](https://github.com/jamesreimer/html-skeleton) to create a new
 repository with the website sources, validation, CI, documentation, and contributor
-guidance. Replace the site placeholders and adapt repository guidance to your project.
+guidance, including the `site/` source layout. Replace the site placeholders and
+adapt repository guidance to your project.
 **Generated consumer repositories do not automatically track upstream changes.**
 Consumers own their copies and choose which later changes to adopt.
 
@@ -27,11 +28,20 @@ static-server preview, and the 404 page's hosting assumptions.
 
 ## Repository structure
 
-- `index.html`, `404.html`: sparse semantic pages.
-- `favicon.svg`, `robots.txt`, `site.webmanifest`: site metadata and primitives.
-- `assets/css/`: reset, base styles, layout, components, and utilities.
-- `assets/js/main.js`: optional, currently comment-only entry point.
-- `assets/images/`, `assets/fonts/`, `assets/icons/`: empty asset locations.
+The root holds project tooling, governance, documentation, and tests. `site/`
+is the canonical browser-facing source; `dist/` is generated output only.
+Serve `site/`, not the repository root, so repository-only files stay outside
+the website document root. Preview without a build or Node:
+
+```sh
+python3 -m http.server 8000 --bind 127.0.0.1 --directory site
+```
+
+- `site/index.html`, `site/404.html`: sparse semantic pages.
+- `site/favicon.svg`, `site/robots.txt`, `site/site.webmanifest`: site metadata and primitives.
+- `site/assets/css/`: reset, base styles, layout, components, and utilities.
+- `site/assets/js/main.js`: optional, currently comment-only entry point.
+- `site/assets/images/`, `site/assets/fonts/`, `site/assets/icons/`: empty asset locations.
 - `docs/`: [architecture](docs/architecture.md), [accessibility](docs/accessibility.md),
   and [usage](docs/usage.md).
 - `scripts/`, `tools/`, `tests/`: repository validation and distribution tooling.
@@ -77,8 +87,12 @@ npm run build:distribution
 
 With the current package version, this creates `dist/html-skeleton-v0.1.0/` and
 `dist/html-skeleton-v0.1.0.zip`. The explicit build rule includes 11 website files
-and empty image/font/icon directories; it excludes governance, CI, tooling,
-documentation, dependencies, and `.gitkeep` placeholders. Output is ignored by Git.
+and empty image/font/icon directories from `site/`; it excludes governance, CI,
+tooling,
+documentation, dependencies, and `.gitkeep` placeholders. Root-level `dist/` is
+ignored by Git and stays outside `site/`. The ZIP retains its
+`html-skeleton-vX.Y.Z/` wrapper with website files directly inside it, without a
+`site/` wrapper. Minimal ZIP consumers receive only that website root.
 See [architecture](docs/architecture.md#tooling-boundary) for ownership and extension.
 
 ## Provenance and contribution

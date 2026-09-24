@@ -5,6 +5,11 @@
 Read [README.md](README.md) and [CONTRIBUTING.md](CONTRIBUTING.md) before changing
 HTML Skeleton. The initial implementation follows
 [Issue #1](https://github.com/jamesreimer/html-skeleton/issues/1).
+The browser-facing source-root contract follows
+[Issue #8](https://github.com/jamesreimer/html-skeleton/issues/8): `site/` owns
+directly servable sources, the root owns repository tooling and guidance, and
+root-level `dist/` contains generated, ignored output only. Preserve the consumer
+ZIP layout without a `site/` wrapper.
 This repository owns its adapted baseline; no external standards are adopted.
 Consumers own their copies and should replace these links with their actual
 project authority entry points. Source location alone does not confer authority.

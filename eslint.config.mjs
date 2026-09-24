@@ -9,7 +9,7 @@ export default [
     languageOptions: { globals: globals.node },
   },
   {
-    files: ['assets/js/**/*.js'],
+    files: ['site/**/*.js'],
     languageOptions: { sourceType: 'script', globals: globals.browser },
   },
 ];

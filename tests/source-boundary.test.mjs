@@ -3,7 +3,6 @@ import { test } from 'node:test';
 import { existsSync } from 'node:fs';
 import { execFileSync, spawnSync } from 'node:child_process';
 import {
-  cp,
   mkdir,
   mkdtemp,
   readFile,
@@ -39,15 +38,49 @@ async function put(cwd, path, content) {
   await writeFile(join(cwd, path), content);
   git(cwd, 'add', '--', path);
 }
-async function fixture(t) {
+// Keep unrelated caller-index files out of the controlled validation harness.
+// Export these actual staged tools/configs and site inputs, not working-tree bytes.
+const fixtureInputs = [
+  'package.json',
+  '.gitignore',
+  '.gitattributes',
+  '.editorconfig',
+  '.pre-commit-config.yaml',
+  '.prettierrc.json',
+  '.prettierignore',
+  '.htmlvalidate.json',
+  '.stylelintrc.json',
+  'eslint.config.mjs',
+  '.markdownlint-cli2.jsonc',
+  'ruff.toml',
+  'markdownlint-rules',
+  'scripts/validate.mjs',
+  'scripts/check-source-boundary.mjs',
+  'scripts/check-site-links.mjs',
+  'scripts/build-distribution.mjs',
+  'site',
+  'tests/baseline.test.mjs',
+  'tests/fixtures/source-boundary.html',
+  'tools/check-links.mjs',
+  'tools/link-frontmatter.mjs',
+];
+async function exportIndex(t, source, paths = []) {
   const cwd = await mkdtemp(join(tmpdir(), 'html-skeleton-boundary-'));
   t.after(() => rm(cwd, { recursive: true, force: true }));
+  const indexed = git(source, 'ls-files', '--cached', '-z', '--', ...paths);
+  // The absolute prefix always names a fresh empty temporary directory. Git
+  // supplies index bytes, preserving staged additions/deletions/renames and NUL
+  // delimited filenames, even when working-tree files are missing or modified.
+  execFileSync('git', ['checkout-index', '--stdin', '-z', `--prefix=${cwd}/`], {
+    cwd: source,
+    input: indexed,
+  });
+  return cwd;
+}
+async function fixture(t, source = root) {
+  const cwd = await exportIndex(t, source, fixtureInputs);
   git(cwd, 'init', '-q');
-  // Copy the actual index-selected repository, including newly staged changes.
-  for (const path of git(root, 'ls-files', '-z').split('\0').filter(Boolean)) {
-    await mkdir(dirname(join(cwd, path)), { recursive: true });
-    await cp(join(root, path), join(cwd, path));
-  }
+  await mkdir(join(cwd, 'docs'), { recursive: true });
   await symlink(
     join(root, 'node_modules'),
     join(cwd, 'node_modules'),
@@ -108,7 +141,7 @@ test('index boundary rejects staged and committed source without filename guesse
 test('site pages receive native validation while explicit fixtures and tooling remain allowed', async (t) => {
   const cwd = await fixture(t);
   const html = await readFile(
-    join(root, 'tests/fixtures/source-boundary.html'),
+    join(cwd, 'tests/fixtures/source-boundary.html'),
     'utf8',
   );
   for (const path of ['site/about.html', 'site/pages/about.html']) {
@@ -141,48 +174,34 @@ test('site pages receive native validation while explicit fixtures and tooling r
   assert.match(check(cwd, 'check:source-boundary', false), /dist\/about\.html/);
 });
 
-test('canonical validation catches staged and committed HTML outside site/', async (t) => {
+test('canonical validation reports the staged boundary violation', async (t) => {
   const cwd = await fixture(t);
-  // Skip only this enclosing hook to avoid recursive test execution. All other
-  // hooks, their real configuration, and the canonical launcher remain active.
-  const env = { ...process.env, SKIP: 'test-baseline' };
-  // Let the other Node test suites run as independent runners.
+  // Exercise the actual launcher/config and content checks once. Regression
+  // suites run in the outer validation; rerunning them here adds no coverage
+  // and test-baseline would recurse. No content-check hook is skipped.
+  const env = {
+    ...process.env,
+    SKIP: 'test-baseline,test-link-validation,test-markdown-rules',
+  };
   delete env.NODE_TEST_CONTEXT;
   const html = await readFile(
-    join(root, 'tests/fixtures/source-boundary.html'),
+    join(cwd, 'tests/fixtures/source-boundary.html'),
     'utf8',
   );
   await put(cwd, 'site/pages/about.html', html);
-  check(cwd, 'validate', true, env);
   await put(cwd, 'about.html', html);
   assert.match(
     git(cwd, 'diff', '--cached', '--name-status'),
     /A\s+about\.html/,
   );
-  const staged = check(cwd, 'validate', false, env);
-  assert.match(staged, /Check browser source boundary[^\n]*Failed/);
+  const output = check(cwd, 'validate', false, env);
+  assert.match(output, /Check browser source boundary[^\n]*Failed/);
   assert.match(
-    staged,
+    output,
     /"about.html": browser-facing source belongs under site\//,
   );
-  git(
-    cwd,
-    '-c',
-    'user.name=Boundary Test',
-    '-c',
-    'user.email=test@example.invalid',
-    '-c',
-    'core.hooksPath=/dev/null',
-    'commit',
-    '-qm',
-    'Committed misplaced HTML',
-  );
-  assert.equal(git(cwd, 'status', '--porcelain'), '');
-  const committed = check(cwd, 'validate', false, env);
-  assert.match(
-    committed,
-    /"about.html": browser-facing source belongs under site\//,
-  );
+  // Ensure the expected guard failure is the only failing hook.
+  assert.equal(output.match(/\.{3,}Failed/g)?.length, 1, output);
 });
 
 test('boundary CLI uses repository paths from every working directory and after staged moves', async (t) => {
@@ -243,4 +262,65 @@ test('baseline retains exact root-name coverage beyond classified extensions', a
     if (path.startsWith('assets/'))
       await rm(join(cwd, 'assets'), { recursive: true, force: true });
   }
+});
+
+test('index export preserves staged state despite unrelated working-tree changes', async (t) => {
+  const source = await mkdtemp(join(tmpdir(), 'html-skeleton-index-source-'));
+  t.after(() => rm(source, { recursive: true, force: true }));
+  git(source, 'init', '-q');
+  for (const path of ['unrelated.txt', 'deleted.txt', 'old.txt'])
+    await put(source, path, 'indexed\n');
+  git(
+    source,
+    '-c',
+    'user.name=Boundary Test',
+    '-c',
+    'user.email=test@example.invalid',
+    '-c',
+    'core.hooksPath=/dev/null',
+    'commit',
+    '-qm',
+    'Index baseline',
+  );
+  await rm(join(source, 'unrelated.txt'));
+  git(source, 'rm', 'deleted.txt');
+  git(source, 'mv', 'old.txt', 'renamed.txt');
+  const unusual = 'nested/space and\nnewline.txt';
+  await put(source, unusual, 'staged addition\n');
+  await writeFile(join(source, unusual), 'unstaged bytes\n');
+  const before = git(source, 'status', '--porcelain', '-z');
+  const exported = await exportIndex(t, source);
+  assert.equal(
+    await readFile(join(exported, 'unrelated.txt'), 'utf8'),
+    'indexed\n',
+  );
+  assert.equal(
+    await readFile(join(exported, 'renamed.txt'), 'utf8'),
+    'indexed\n',
+  );
+  assert.equal(
+    await readFile(join(exported, unusual), 'utf8'),
+    'staged addition\n',
+  );
+  for (const path of ['old.txt', 'deleted.txt'])
+    assert.equal(existsSync(join(exported, path)), false);
+  assert.equal(git(source, 'status', '--porcelain', '-z'), before);
+  assert.equal(existsSync(join(source, 'unrelated.txt')), false);
+  assert.equal(
+    await readFile(join(source, unusual), 'utf8'),
+    'unstaged bytes\n',
+  );
+});
+
+test('controlled fixtures ignore unrelated live-index violations and unstaged deletions', async (t) => {
+  const source = await fixture(t);
+  await put(source, 'unrelated.txt', 'indexed\n');
+  await rm(join(source, 'unrelated.txt'));
+  await put(source, 'about.html', '<p>Live violation</p>\n');
+  assert.match(check(source, 'check:source-boundary', false), /about\.html/);
+  const isolated = await fixture(t, source);
+  check(isolated, 'check:source-boundary');
+  assert.equal(existsSync(join(isolated, 'about.html')), false);
+  assert.equal(existsSync(join(source, 'unrelated.txt')), false);
+  assert.match(check(source, 'check:source-boundary', false), /about\.html/);
 });

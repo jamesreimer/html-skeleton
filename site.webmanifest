@@ -1,0 +1,13 @@
+{
+  "name": "Site name",
+  "short_name": "Site name",
+  "start_url": "./",
+  "display": "browser",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+.container {
+  inline-size: min(100% - 2 * var(--space-2), var(--content-width));
+  margin-inline: auto;
+}
+
+.flow > * {
+  margin-block: 0;
+}
+
+.flow > * + * {
+  margin-block-start: var(--space-2);
+}
+
+.site-header,
+.site-footer {
+  padding-block: var(--space-3);
+}

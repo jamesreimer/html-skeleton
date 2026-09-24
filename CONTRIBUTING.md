@@ -15,7 +15,7 @@ Follow the [setup instructions](README.md#run-checks), stage intended new files,
 and run:
 
 ```sh
-.venv/bin/pre-commit run --all-files --show-diff-on-failure
+npm run validate
 git diff --check
 ```
 
@@ -24,7 +24,8 @@ included. Rerun after reviewing fixes. An installed commit hook checks staged
 files; the full command also catches effects on unchanged sources, such as
 links to a deleted target. Run the full command before opening a pull request.
 
-CI runs the same configuration on the checked-out commit. Required checks,
+CI invokes `npm run validate`, which runs the same configuration on the checked-out
+commit. Required checks,
 review counts, merge strategy, and permissions belong to the repository's host
 settings and should be chosen for the project.
 The [default-branch ruleset](rulesets/README.md) supplies a reusable starting
@@ -34,12 +35,26 @@ the workflow so every pull request targeting the protected branch can report it.
 
 ## Changing validation
 
-`.pre-commit-config.yaml` owns tool selection and file scope. Markdown rules live
+`.pre-commit-config.yaml` owns hook selection; `package.json` owns the web tool
+commands it calls. `npm run validate` is the complete contract. Prettier checks
+supported source/config formats except the explicitly excluded inherited tools,
+fixtures, and Markdown (see `.prettierignore`). HTML Validate checks root HTML;
+Stylelint checks `assets/css/**/*.css`; ESLint checks JavaScript repository-wide.
+HTML Validate's Prettier preset disables conflicting formatting rules only.
+The maintained recommended/standard presets keep custom rule maintenance small.
+Website Linkinator checking follows local HTML and CSS references recursively
+from both pages, including fragments. External origins are skipped. Manifest JSON
+is formatted; manifest semantics, metadata URLs, and custom runtime-created URLs
+are not comprehensively validated. Extend the entry points as the site grows.
+Project regression tests exercise actual CLIs in isolated Git repositories and
+check exact archive contents, missing inputs, versioning, and repeatable bytes.
+
+Markdown rules live
 in `.markdownlint-cli2.jsonc`; Python rules live in `ruff.toml`. Use the tools'
 native configuration when project requirements change. Make exclusions explicit
 and explain substantive coverage reductions in the pull request.
 
-Linkinator checks Markdown links offline, including fragments. It runs as a
+Linkinator checks Markdown and HTML links offline, including fragments. It runs as a
 fresh process through `tools/check-links.mjs`, with exact dependencies in
 `package.json` and `package-lock.json`. A startup probe verifies that front matter
 is excluded by the renderer actually used by Linkinator; an ineffective hook

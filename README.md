@@ -1,119 +1,98 @@
-# Repository Template
+# HTML Skeleton
 
-[![Repository validation](https://github.com/jamesreimer/repo-template/actions/workflows/validate.yml/badge.svg?branch=main)](https://github.com/jamesreimer/repo-template/actions/workflows/validate.yml?query=branch%3Amain)
-[![Latest release](https://img.shields.io/github/v/release/jamesreimer/repo-template)](https://github.com/jamesreimer/repo-template/releases/latest)
-[![License: CC0](https://img.shields.io/badge/license-CC0-blue)](LICENSE)
-[![Node.js: 24.18.1](https://img.shields.io/badge/Node.js-24.18.1-green)](#run-checks)
-[![Python: >=3.10](https://img.shields.io/badge/Python-%3E%3D3.10-blue)](#run-checks)
+A small HTML5, plain CSS, and vanilla JavaScript foundation for framework-free
+websites. Version **0.1.0** is a pre-1.0 baseline. Serve the website files directly;
+no application runtime or build step is required.
 
-A reusable starting point for Git repositories, with contributor guidance and
-maintained tools for common file checks. It does not prescribe an application
-language, directory layout, deployment system, or organizational governance.
+This is a starting point, not a theme, component library, framework, or finished
+site. It includes no bundler, analytics, CMS, server code, deployment automation,
+or npm scaffolding package.
 
-## Start a repository
+## Use the skeleton
 
-1. Create a repository from this template or copy the files you need.
-2. Replace this README with the project's purpose and usage instructions.
-3. Review and adapt `LICENSE`, `SECURITY.md`, `CONTRIBUTING.md`, `AGENTS.md`, and
-   [MAINTAINING.md](MAINTAINING.md) for the new project's actual ownership,
-   reporting route, working practices, and release procedure.
-4. Adapt the checks and ignore patterns to the project's files and requirements.
-5. Configure repository permissions and branch protection on your Git host.
-   For GitHub, deliberately install and verify the
-   [default-branch ruleset](rulesets/README.md). Copying template files does not
-   configure live rules. The supplied required job is **Repository validation**.
+### GitHub Template
 
-The template is released under [CC0](LICENSE). Choose the appropriate license
-for your project's own content deliberately.
+Choose **Use this template** on
+[html-skeleton](https://github.com/jamesreimer/html-skeleton) to create an independent
+repository with source, checks, CI, documentation, and contributor guidance.
+Replace the site placeholders and adapt repository guidance to your project.
+Consumers own their copies; upstream changes do not synchronize automatically.
+
+### Minimal distribution
+
+Future tagged releases may attach `html-skeleton-vX.Y.Z.zip`. Extract it and serve
+the enclosed directory. This curated asset contains only the website foundation;
+GitHub's automatic source ZIPs contain the full repository and are different.
+This initial implementation does not publish a release. Build a local candidate
+with `npm run build:distribution` after installing the repository dependencies.
+
+See [usage](docs/usage.md) for customization and serving details.
 
 ## Run checks
 
-Install Python 3.10 or later and Node.js 24.18.1 (including npm). Then:
+Use Node.js 24.18.1 (including npm) and Python 3.10 or later. From the repository root:
 
 ```sh
 npm ci --ignore-scripts
 python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements-dev.txt
-.venv/bin/pre-commit run --all-files --show-diff-on-failure
+git add <intended-new-files>
+npm run validate
+git diff --check
 ```
 
-On Windows, use `.venv\Scripts\python.exe` and
-`.venv\Scripts\pre-commit.exe` instead. Initial setup downloads isolated hook
-environments and requires network access. Link checking itself is offline.
+On Windows, use `.venv\Scripts\python.exe` for setup. The validation launcher
+selects the platform's local virtual environment, falling back to `pre-commit`
+on PATH (as in CI). Initial hook setup requires network access; link validation
+is offline. Checks may fix whitespace; review fixes and rerun. New files must be
+staged because inherited checks use Git's tracked-file selection.
 
-The same pre-commit configuration runs locally and in CI. Checks may fix
-whitespace or formatting; review those changes and rerun. `--all-files` checks
-Git-tracked files, so stage new files before running it.
+`npm run validate` is the complete local and CI contract: inherited repository
+hygiene, Markdown and workflow checks, Prettier formatting, HTML Validate,
+Stylelint, ESLint, local links/references, and regression/distribution tests.
+`npm run format` applies source formatting. Markdown retains the inherited
+Markdownlint rules; Python retains Ruff. External URLs are not requested.
+These checks do not prove accessibility or overall correctness.
 
-Optionally run checks when committing:
+Optionally install the commit hook with `.venv/bin/pre-commit install`.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for scope and maintenance.
+
+## Distribution build
 
 ```sh
-.venv/bin/pre-commit install
+npm run build:distribution
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for maintenance and validation details.
+The explicit rule in [scripts/build-distribution.mjs](scripts/build-distribution.mjs)
+reads the version from `package.json`, creates `dist/html-skeleton-v0.1.0/`, and
+writes `dist/html-skeleton-v0.1.0.zip`. It includes the two HTML pages, favicon,
+robots file, manifest, five CSS files, JavaScript entry point, and empty images,
+fonts, and icons directories. Repository-only files and `.gitkeep` placeholders
+are excluded. Missing required source files fail before replacing output.
+Fixed ZIP metadata and entry order make unchanged inputs byte-identical.
+Generated output is ignored by Git. Rebuild after editing source.
 
-## What is checked
+## Repository map
 
-| Responsibility | Tool |
-| --- | --- |
-| Merge markers, file endings, trailing whitespace, and mixed line endings | pre-commit-hooks |
-| JSON, YAML, and TOML syntax | pre-commit-hooks |
-| Case-colliding paths and broken symlinks | pre-commit-hooks |
-| Recognizable private-key content | pre-commit-hooks |
-| Selected Markdown structure, syntax, and reference rules | markdownlint-cli2 |
-| Local Markdown link destinations and fragments | Linkinator |
-| Python lint and formatting, when Python files are present | Ruff |
-| GitHub Actions workflow syntax and expressions | actionlint |
+- `index.html`, `404.html`: sparse semantic pages.
+- `assets/css/`: reset, element defaults, layout, components, utilities.
+- `assets/js/main.js`: optional, currently comment-only entry point.
+- `assets/images/`, `assets/fonts/`, `assets/icons/`: empty asset locations.
+- `docs/`: [architecture](docs/architecture.md), [accessibility](docs/accessibility.md),
+  and [usage](docs/usage.md).
+- `scripts/`: validation entry point, website link check, distribution assembly.
+- `tools/`, `tests/`: inherited checks and project regression evidence.
+- `.github/workflows/validate.yml`: the same validation contract in CI.
 
-Private-key detection is limited; it is not a comprehensive secret scanner.
-External URLs are not checked. Offline link checking does not render a website
-or resolve a framework's routes. Projects with generated pages or special URL
-semantics should configure checks against the appropriate source or build.
+## Ownership and maintenance
 
-Markdown rules are selected explicitly in `.markdownlint-cli2.jsonc`. These
-are editable defaults, not a claim that every flagged document is invalid
-Markdown. Both ATX (`#`) and Setext headings are supported; there is no required
-heading style, first heading, single-H1 rule, or prose line-length limit.
+Derived from [repo-template](https://github.com/jamesreimer/repo-template).
+HTML Skeleton owns its adapted baseline; no external standards are adopted.
+Applicable inherited checks, contributor guidance, and human release authority
+are preserved. Consumer update required: no automatic propagation; adoption is
+explicit and consumer-owned. The project retains the inherited [CC0 license](LICENSE).
 
-One local authoring rule requires explicit closing code fences. Although
-CommonMark permits implicit closure, a forgotten closer can absorb intended
-prose and prevent its links from being checked. `fenced-code-closed` uses
-markdownlint's existing parser tokens and reports the opening line. It does not
-autofix because the intended closing position requires the author's judgment.
-
-## Ownership and standards
-
-This repository owns the reusable baseline. A repository created from it owns
-its copy and may change its files, tooling, and defaults. There is no obligation
-to maintain byte-identical files or synchronize later template revisions.
-
-Standards have a separate role: explicitly adopted standards govern within
-their assigned scope. The baseline does not override them, and a standard's
-source location does not automatically confer authority over another repository.
-Record the standards that actually apply in the consuming repository's existing
-authority entry point and route contributors to it from `AGENTS.md`.
-
-The [standards template library](https://github.com/jamesreimer/standards-templates)
-provides adoption candidates covering architectural reasoning, standards
-adoption, repository responsibility, operational execution, work identification,
-naming, shared assets, and domain-specific subjects. Consider each relevant
-responsibility and any existing governing standards; architectural reasoning
-is not a substitute for the other subjects. Linking to the library does not
-adopt its contents, and using this template does not adopt any of them.
-
-No separate provenance document is required by this template. Keep attribution,
-license notices, and dependency identities where they serve their actual purpose
-or are required by applicable terms or adopted standards.
-
-## Design choices
-
-Established tools own their parsing and validation domains. This template ships
-configuration and one tested parser-backed authoring rule, without a custom
-validation engine, extension API, or generated tree snapshot. Add project tests
-and domain-specific checks when the project needs them, using the existing
-runner or its own build system.
-
-Evaluate additions against a concrete need and their maintenance cost for
-consuming repositories. Revise defaults that obstruct a project's requirements
-rather than treating their presence in the template as proof they are necessary.
+Changes use a work branch and PR. Review, merge, release, and deployment are
+separate actions; see [AGENTS.md](AGENTS.md), [CONTRIBUTING.md](CONTRIBUTING.md), and
+[MAINTAINING.md](MAINTAINING.md). The inherited [ruleset](rulesets/README.md) is an
+optional installation baseline, not proof of live branch protection.

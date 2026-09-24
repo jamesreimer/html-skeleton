@@ -1,0 +1,50 @@
+:root {
+  color-scheme: light;
+
+  --font-body: system-ui, sans-serif;
+  --color-text: #222;
+  --color-background: #fff;
+  --color-link: #174b8a;
+  --space-1: 0.5rem;
+  --space-2: 1rem;
+  --space-3: 2rem;
+  --content-width: 65rem;
+  --radius: 0.25rem;
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  line-height: 1.6;
+  overflow-wrap: break-word;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  line-height: 1.2;
+}
+
+a {
+  color: var(--color-link);
+  text-underline-offset: 0.2em;
+}
+
+:focus-visible {
+  outline: 0.2rem solid currentcolor;
+  outline-offset: 0.25rem;
+}
+
+input,
+select,
+textarea {
+  max-inline-size: 100%;
+}
+
+textarea {
+  resize: vertical;
+}

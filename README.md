@@ -39,7 +39,13 @@ static-server preview, and the 404 page's hosting assumptions.
 
 ## Run checks
 
-Repository tooling requires Node.js 24.18.1 (including npm) and Python 3.10 or later.
+Repository tooling supports Node.js `^22.22.0 || >=24.8.0` (including npm):
+Node 22 from 22.22.0, or Node 24.8.0 and later. Python 3.10 or later is required.
+CI selects Node 24.18.1 and Python 3.12; the isolated Markdown hooks also pin
+Node 24.18.1 independently of the shell's Node version. The Node range fits the
+locked dependencies' engine requirements; it is not an exhaustive test matrix.
+The full contract has been checked on Node 22.22.0, 24.8.0, and 24.18.1.
+
 From the repository root:
 
 ```sh
@@ -50,9 +56,13 @@ npm run validate
 ```
 
 On Windows, use `.venv\Scripts\python.exe` for setup. Stage intended new files before
-validation so inherited Git-based checks see them. The launcher uses the local
-virtual environment or the pinned `pre-commit` runner on PATH. Initial setup needs
-network access; link checking is offline. Review any automatic fixes and rerun.
+validation so inherited Git-based checks see them. Setup installs pre-commit 4.6.2
+from `requirements-dev.txt`. The launcher prefers the local virtual environment's
+runner, falling back to `pre-commit` on PATH without checking an exact version.
+The pre-commit configuration enforces a minimum of 4.6.2; use the pinned version
+for reproducibility. If no runner is available, validation fails with setup guidance.
+Initial setup needs network access; link checking is offline. Review any automatic
+fixes and rerun.
 
 `npm run validate` is the complete local and CI contract: inherited repository
 checks, formatting, HTML, CSS, JavaScript, local links, and regression/distribution

@@ -27,7 +27,7 @@
     "check:site-links": "node scripts/check-site-links.mjs"
   },
   "engines": {
-    "node": ">=22.19.0"
+    "node": "^22.22.0 || >=24.8.0"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

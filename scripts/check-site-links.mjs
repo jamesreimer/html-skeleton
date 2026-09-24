@@ -3,13 +3,17 @@ import { fileURLToPath } from 'node:url';
 import { LinkChecker } from 'linkinator';
 
 const site = fileURLToPath(new URL('../site/', import.meta.url));
-const pages = [];
-for await (const page of glob('**/*.html', { cwd: site })) pages.push(page);
+const entries = [];
+for await (const entry of glob(['**/*.html', '**/*.css'], { cwd: site }))
+  entries.push(entry);
 
 let origin;
 const result = await new LinkChecker().check({
-  // Check every HTML entry, including pages not linked from the home page.
-  path: ['.', ...pages],
+  // Explicit seeds are always crawled. Discovered links share a URL cache but
+  // inherit an entry-specific crawl prefix, so a page can otherwise cache a
+  // stylesheet as existence-only and suppress CSS reference checks. Seed every
+  // HTML/CSS file, including unlinked pages and imported/unlinked stylesheets.
+  path: ['.', ...entries],
   serverRoot: site,
   recurse: true,
   checkFragments: true,

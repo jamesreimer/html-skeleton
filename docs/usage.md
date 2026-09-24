@@ -13,8 +13,9 @@ for your project. Creating a repository does not install branch protection.
 
 When a tagged release supplies `html-skeleton-vX.Y.Z.zip`, download that attached
 asset and extract it. GitHub-generated source archives are full repository
-snapshots, not this curated distribution. The initial baseline only builds the ZIP
-locally; it does not create a release. Minimal ZIP users receive no repository
+snapshots, not this curated distribution. `npm run build:distribution` builds the
+ZIP locally without publishing it; publication follows the documented
+[release process](../MAINTAINING.md). Minimal ZIP users receive no repository
 checks, governance, or development documentation. The archive keeps its versioned
 wrapper; the website files are directly inside it, without a `site/` directory.
 

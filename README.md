@@ -18,10 +18,11 @@ adapt repository guidance to your project.
 **Generated consumer repositories do not automatically track upstream changes.**
 Consumers own their copies and choose which later changes to adopt.
 
-Future tagged releases will attach a curated `html-skeleton-vX.Y.Z.zip` containing
-only the website foundation. GitHub's automatically generated source archives
-contain the full repository and are different. This initial implementation builds
-the curated ZIP locally; it does not publish a release.
+Tagged releases may attach a curated `html-skeleton-vX.Y.Z.zip` containing only
+the website foundation through the documented [release process](MAINTAINING.md).
+GitHub's automatically generated source archives contain the full repository and
+are different. The repository has no automatic release-publishing workflow;
+`npm run build:distribution` builds the local artifact without publishing it.
 
 See [usage](docs/usage.md) for customization, template versus ZIP consumption,
 static-server preview, and the 404 page's hosting assumptions.
@@ -54,7 +55,6 @@ Node 22 from 22.22.0, or Node 24.8.0 and later. Python 3.10 or later is required
 CI selects Node 24.18.1 and Python 3.12; the isolated Markdown hooks also pin
 Node 24.18.1 independently of the shell's Node version. The Node range fits the
 locked dependencies' engine requirements; it is not an exhaustive test matrix.
-The full contract has been checked on Node 22.22.0, 24.8.0, and 24.18.1.
 
 From the repository root:
 

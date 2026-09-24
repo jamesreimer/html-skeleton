@@ -24,13 +24,15 @@ version numbers, not release titles. Consumers may document a different local
 title convention. The editable title does not replace the immutable tag or its
 verified target.
 
-Future formal releases must use **annotated Git tags**. A GitHub Release must
+Formal releases must use **annotated Git tags**. A GitHub Release must
 refer to the corresponding tag. Once published, release tags are immutable:
 do not move, replace, or delete them. Corrections requiring a different commit
 need a new version and tag.
 
 Pre-1.0 development begins at `0.1.0`; incompatible changes may occur before
-1.0. Document consumer impact in release notes. This baseline creates no release.
+1.0. Document consumer impact in release notes. The repository has no automatic
+release-publishing workflow; maintainers publish through the authorized process
+below. `npm run build:distribution` builds local artifacts only.
 
 ## Prepare the release
 

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
   cp,
+  lstat,
   mkdtemp,
   mkdir,
   readFile,
@@ -198,6 +199,20 @@ test('distribution is exact, repeatable, versioned, source-preserving, and fails
   pkg.version = '../escape';
   await writeFile(join(cwd, 'package.json'), JSON.stringify(pkg));
   run(cwd, ['scripts/build-distribution.mjs'], false);
+});
+
+test('canonical website source is confined to site/', async () => {
+  for (const entry of [
+    'index.html',
+    '404.html',
+    'favicon.svg',
+    'robots.txt',
+    'site.webmanifest',
+    'assets',
+  ]) {
+    await assert.rejects(lstat(join(root, entry)), { code: 'ENOENT' });
+    assert.ok(await lstat(join(root, 'site', entry)));
+  }
 });
 
 test(

@@ -52,7 +52,11 @@ Existing link fixtures are embedded strings/JSON; the boundary fixture is an
 explicit non-site HTML file. Configuration and governance files remain at root;
 ignored outputs/environments are absent from the index. Untracked files are not
 checked, so stage new sources before validation. Force-tracked generated HTML,
-CSS, or manifests receive no `dist/` exemption.
+CSS, or manifests receive no `dist/` exemption. Stage moves and deletions too: the
+index retains the old path until staged. The baseline structural test also retains
+the exact root-name checks, including `robots.txt`, `favicon.svg`, and `assets/`.
+Baseline test files run serially so nested canonical checks do not overlap the
+website baseline suite.
 
 ## Changing validation
 

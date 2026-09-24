@@ -7,6 +7,7 @@ import {
   mkdir,
   mkdtemp,
   readFile,
+  rename,
   rm,
   symlink,
   writeFile,
@@ -182,4 +183,64 @@ test('canonical validation catches staged and committed HTML outside site/', asy
     committed,
     /"about.html": browser-facing source belongs under site\//,
   );
+});
+
+test('boundary CLI uses repository paths from every working directory and after staged moves', async (t) => {
+  const cwd = await fixture(t);
+  const directories = ['', 'site', 'docs', 'site/assets/js'];
+  const checkEveryDirectory = (success) => {
+    for (const directory of directories) {
+      const result = spawnSync(
+        process.execPath,
+        [join(cwd, 'scripts/check-source-boundary.mjs')],
+        {
+          cwd: join(cwd, directory),
+          encoding: 'utf8',
+        },
+      );
+      assert.equal(result.error, undefined);
+      assert.equal(result.status, success ? 0 : 1, result.stderr);
+      if (!success) {
+        assert.match(
+          result.stderr,
+          /"about.html": browser-facing source belongs under site\//,
+        );
+        assert.match(
+          result.stderr,
+          /Stage moves and deletions before validation/,
+        );
+      }
+    }
+  };
+  checkEveryDirectory(true);
+  await put(cwd, 'about.html', '<p>Move fixture</p>\n');
+  checkEveryDirectory(false);
+  await rename(join(cwd, 'about.html'), join(cwd, 'site/about.html'));
+  checkEveryDirectory(false);
+  git(cwd, 'add', '-A');
+  checkEveryDirectory(true);
+});
+
+test('baseline retains exact root-name coverage beyond classified extensions', async (t) => {
+  const cwd = await fixture(t);
+  const env = { ...process.env };
+  delete env.NODE_TEST_CONTEXT;
+  for (const path of ['robots.txt', 'favicon.svg', 'assets/.gitkeep']) {
+    await put(cwd, path, '\n');
+    const result = spawnSync(
+      process.execPath,
+      [
+        '--test',
+        '--test-name-pattern=canonical website source is confined',
+        'tests/baseline.test.mjs',
+      ],
+      { cwd, encoding: 'utf8', env },
+    );
+    assert.equal(result.error, undefined);
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    assert.match(result.stdout + result.stderr, /Missing expected rejection/);
+    git(cwd, 'rm', '-f', '--', path);
+    if (path.startsWith('assets/'))
+      await rm(join(cwd, 'assets'), { recursive: true, force: true });
+  }
 });

@@ -23,7 +23,7 @@
     "check:css": "stylelint \"site/**/*.css\"",
     "check:js": "eslint .",
     "build:distribution": "node scripts/build-distribution.mjs",
-    "test:baseline": "node --test tests/baseline.test.mjs tests/source-boundary.test.mjs",
+    "test:baseline": "node --test --test-concurrency=1 tests/baseline.test.mjs tests/source-boundary.test.mjs",
     "check:source-boundary": "node scripts/check-source-boundary.mjs",
     "check:site-links": "node scripts/check-site-links.mjs"
   },

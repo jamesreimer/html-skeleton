@@ -34,11 +34,20 @@ Run the commands from the intended checkout root in a dedicated Bash session:
 bash
 ```
 
-Keep all subsequent commands in that session. It exits on a failed command;
-if it exits, stop and restart the preflight rather than continuing later blocks
-in the parent shell. These examples target github.com explicitly. Other hosts
-require deliberate adaptation of both the URL guard and every API hostname,
-as well as verification of the required-check app ID below.
+Keep all subsequent commands in that session. Paste one complete block at a
+time, including its braces, and wait for it to finish before proceeding. Braces
+let Bash 3.2 parse the whole block before running it, so prompts receive operator
+input and a failure cannot leave the rest of that block executing in the parent
+shell. Do not concatenate blocks. The session exits on a failed command; if it
+exits, stop and restart preflight rather than pasting later blocks in the parent
+shell.
+
+The URL guard accepts only `https://github.com/...` and `git@github.com:...`
+(the scp-style SSH form). It rejects `ssh://git@github.com/...`, SSH host aliases
+such as `git@github-work:...`, GitHub Enterprise hosts, and other URL forms. Use
+an accepted remote for the intended repository or deliberately adapt the guard
+and lookup procedure. Other hosts also require adapting every API hostname and
+verifying the required-check app ID below; these examples pin github.com.
 
 Select a remote by name after inspecting its fetch URL. For a template-derived
 repository, select the consumer's remote, not an added upstream remote. Forks
@@ -46,36 +55,38 @@ and checkouts with multiple remotes require the same deliberate selection.
 There is no default selection or fallback to HTML Skeleton.
 
 ```sh
-set -euo pipefail
-trap 'printf "%s\n" "Ruleset preflight/operation failed; stop and inspect before retrying." >&2' ERR
-test "$(pwd -P)" = "$(git rev-parse --show-toplevel)"
-git remote -v
-printf 'Remote for the repository you intend to administer: '
-read -r target_remote
-test -n "$target_remote"
-repo_url=$(git remote get-url "$target_remote")
-case "$repo_url" in
-  https://github.com/*|git@github.com:*) ;;
-  *) printf '%s\n' 'Expected a github.com HTTPS or SSH remote URL; stop and inspect.' >&2; exit 1 ;;
-esac
-repo=$(gh repo view "$repo_url" --json nameWithOwner --jq .nameWithOwner)
-test -n "$repo"
-account=$(gh api --hostname github.com user --jq .login)
-repository=$(gh api --hostname github.com "repos/$repo")
-printf 'Authenticated account: %s\nSelected remote: %s\nURL: %s\n' "$account" "$target_remote" "$repo_url"
-printf '%s\n' "$repository" | jq '{full_name, default_branch, permissions}'
-printf '%s\n' "$repository" | jq -e --arg repo "$repo" \
-  '.full_name == $repo and .permissions.admin == true and (.default_branch | type == "string" and length > 0)'
-printf 'Verify account, repository and default branch above; type the full owner/repository to confirm: '
-read -r confirmed_repo
-test "$confirmed_repo" = "$repo"
-readonly repo repo_url target_remote
-evidence='/absolute/path/to/new-ruleset-evidence'
-mkdir "$evidence"
-printf '%s\n' "$repository" > "$evidence/repository.json"
-printf 'host=github.com\naccount=%s\nremote=%s\nurl=%s\nrepo=%s\n' \
-  "$account" "$target_remote" "$repo_url" "$repo" > "$evidence/target.txt"
-gh api --hostname github.com --paginate "repos/$repo/rulesets" > "$evidence/rulesets-before.json"
+{
+  set -euo pipefail
+  trap 'printf "%s\n" "Ruleset preflight/operation failed; stop and inspect before retrying." >&2' ERR
+  test "$(pwd -P)" = "$(git rev-parse --show-toplevel)"
+  git remote -v
+  printf 'Remote for the repository you intend to administer: '
+  read -r target_remote
+  test -n "$target_remote"
+  repo_url=$(git remote get-url "$target_remote")
+  case "$repo_url" in
+    https://github.com/*|git@github.com:*) ;;
+    *) printf '%s\n' 'Expected https://github.com/... or git@github.com:...; stop and inspect.' >&2; exit 1 ;;
+  esac
+  repo=$(gh repo view "$repo_url" --json nameWithOwner --jq .nameWithOwner)
+  test -n "$repo"
+  account=$(gh api --hostname github.com user --jq .login)
+  repository=$(gh api --hostname github.com "repos/$repo")
+  printf 'Authenticated account: %s\nSelected remote: %s\nURL: %s\n' "$account" "$target_remote" "$repo_url"
+  printf '%s\n' "$repository" | jq '{full_name, default_branch, permissions}'
+  printf '%s\n' "$repository" | jq -e --arg repo "$repo" \
+    '.full_name == $repo and .permissions.admin == true and (.default_branch | type == "string" and length > 0)'
+  printf 'Verify account, repository and default branch above; type the full owner/repository to confirm: '
+  read -r confirmed_repo
+  test "$confirmed_repo" = "$repo"
+  readonly repo repo_url target_remote
+  evidence='/absolute/path/to/new-ruleset-evidence'
+  mkdir "$evidence"
+  printf '%s\n' "$repository" > "$evidence/repository.json"
+  printf 'host=github.com\naccount=%s\nremote=%s\nurl=%s\nrepo=%s\n' \
+    "$account" "$target_remote" "$repo_url" "$repo" > "$evidence/target.txt"
+  gh api --hostname github.com --paginate "repos/$repo/rulesets" > "$evidence/rulesets-before.json"
+}
 ```
 
 Replace the evidence path with a new directory outside the checkout before
@@ -102,9 +113,11 @@ Before requiring CI, ensure the default branch and validation workflow already
 exist. Inspect a recent successful check run on a known full commit SHA:
 
 ```sh
-check_sha='<full validated commit SHA>'
-gh api --hostname github.com --paginate "repos/$repo/commits/$check_sha/check-runs" \
-  --jq '.check_runs[] | {name, conclusion, app: {id: .app.id, slug: .app.slug}}'
+{
+  check_sha='<full validated commit SHA>'
+  gh api --hostname github.com --paginate "repos/$repo/commits/$check_sha/check-runs" \
+    --jq '.check_runs[] | {name, conclusion, app: {id: .app.id, slug: .app.slug}}'
+}
 ```
 
 Confirm `Repository validation` is produced by `github-actions` with app ID
@@ -120,7 +133,9 @@ Prepare a reviewed payload from the published baseline. Record its immutable
 source commit and any adaptations in the adopting project's change record.
 
 ```sh
-cp rulesets/default-branch.json "$evidence/desired.json"
+{
+  cp rulesets/default-branch.json "$evidence/desired.json"
+}
 ```
 
 If an applicable repository ruleset already exists, record its actual ID and
@@ -130,19 +145,33 @@ Coordinate administrative edits, refresh the snapshot immediately before the
 write, and stop to reconcile any concurrent change rather than overwriting it.
 
 ```sh
-ruleset_id='<existing repository ruleset ID>'
-gh api --hostname github.com "repos/$repo/rulesets/$ruleset_id" > "$evidence/before.json"
-# Review before.json against desired.json before running the update.
-gh api --hostname github.com --method PUT "repos/$repo/rulesets/$ruleset_id" \
-  --input "$evidence/desired.json" > "$evidence/applied.json"
+{
+  ruleset_id='<existing repository ruleset ID>'
+  gh api --hostname github.com "repos/$repo/rulesets/$ruleset_id" > "$evidence/before.json"
+}
+```
+
+Stop here to inspect `before.json` against `desired.json` and review any
+adaptations. Do not paste the update block until that review is complete.
+Immediately before the write, rerun the snapshot block and reconcile any change
+with the reviewed state; coordinate edits so another operator cannot invalidate
+that review. Then execute the update separately:
+
+```sh
+{
+  gh api --hostname github.com --method PUT "repos/$repo/rulesets/$ruleset_id" \
+    --input "$evidence/desired.json" > "$evidence/applied.json"
+}
 ```
 
 Only when no corresponding rule exists, create one and retain its returned ID:
 
 ```sh
-gh api --hostname github.com --method POST "repos/$repo/rulesets" \
-  --input "$evidence/desired.json" > "$evidence/applied.json"
-ruleset_id=$(jq -er '.id' "$evidence/applied.json")
+{
+  gh api --hostname github.com --method POST "repos/$repo/rulesets" \
+    --input "$evidence/desired.json" > "$evidence/applied.json"
+  ruleset_id=$(jq -er '.id' "$evidence/applied.json")
+}
 ```
 
 ## Verify and retain evidence
@@ -156,11 +185,13 @@ Read back the persisted rule separately from the mutation response. Compare the
 writable fields, sorting rules to avoid differences in API ordering:
 
 ```sh
-gh api --hostname github.com "repos/$repo/rulesets/$ruleset_id" > "$evidence/after.json"
-fields='{name, target, enforcement, bypass_actors, conditions, rules: (.rules | sort_by(.type))}'
-jq -S "$fields" "$evidence/desired.json" > "$evidence/expected.json"
-jq -S "$fields" "$evidence/after.json" > "$evidence/actual.json"
-diff -u "$evidence/expected.json" "$evidence/actual.json"
+{
+  gh api --hostname github.com "repos/$repo/rulesets/$ruleset_id" > "$evidence/after.json"
+  fields='{name, target, enforcement, bypass_actors, conditions, rules: (.rules | sort_by(.type))}'
+  jq -S "$fields" "$evidence/desired.json" > "$evidence/expected.json"
+  jq -S "$fields" "$evidence/after.json" > "$evidence/actual.json"
+  diff -u "$evidence/expected.json" "$evidence/actual.json"
+}
 ```
 
 Require equality or resolve and document any server-added defaults before

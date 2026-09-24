@@ -40,7 +40,10 @@ that document root and generated, ignored output in root-level `dist/`. Preserve
 the curated ZIP layout without a `site/` wrapper when changing source paths.
 
 Canonical validation checks Git-index paths (committed and newly staged files):
-HTML (`.html`/`.htm`), CSS, and `.webmanifest` belong under `site/` at any depth.
+HTML (`.html`), CSS, and `.webmanifest` belong under `site/` at any depth.
+Use lowercase `.html` for pages; `.htm` is outside the supported page contract
+and is not classified by this guard or selected as an HTML/site-link entry.
+Incidental crawling of a linked file is not supported extension coverage.
 These formats identify website source here; there are no tooling or documentation
 uses of them. The exact fixture exceptions in `scripts/check-source-boundary.mjs`
 are owned by regression tests; new exceptions require a specific test consumer.
@@ -69,13 +72,17 @@ repository-wide, with browser globals for `site/**/*.js`.
 HTML Validate's Prettier preset disables conflicting formatting rules only.
 The maintained recommended/standard presets keep custom rule maintenance small.
 Website Linkinator checking follows local HTML and CSS references recursively
-from every HTML page using `site/` as the document root, including fragments. Every
+from every `.html` page using `site/` as the document root, including fragments. Every
 site CSS file is also an explicit crawl entry, including imported or unlinked
 stylesheets, so shared-resource caching cannot skip CSS reference checks. External
 origins are skipped. Manifest JSON is formatted; manifest semantics, metadata URLs, and custom runtime-created URLs
 are not comprehensively validated. Extend the entry points as the site grows.
 Project regression tests exercise actual CLIs in isolated Git repositories and
-check exact archive contents, missing inputs, versioning, and repeatable bytes.
+check exact archive contents, missing required inputs, optional removals,
+versioning, and repeatable bytes. `scripts/distribution-payload.json` owns the
+required/optional file roles and retained empty directories; distribution and
+serving tests derive their expectations from it. Update that declaration for
+intentional payload changes rather than editing independent file lists in tests.
 
 Markdown rules live
 in `.markdownlint-cli2.jsonc`; Python rules live in `ruff.toml`. Use the tools'

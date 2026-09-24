@@ -1,0 +1,17 @@
+{
+  "prefix": "html-skeleton",
+  "files": {
+    "index.html": "required",
+    "404.html": "required",
+    "favicon.svg": "required",
+    "robots.txt": "required",
+    "site.webmanifest": "optional",
+    "assets/css/reset.css": "required",
+    "assets/css/base.css": "required",
+    "assets/css/layout.css": "required",
+    "assets/css/components.css": "required",
+    "assets/css/utilities.css": "optional",
+    "assets/js/main.js": "optional"
+  },
+  "directories": ["assets/images", "assets/fonts", "assets/icons"]
+}

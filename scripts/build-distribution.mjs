@@ -2,6 +2,7 @@ import { lstat, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { zipSync } from 'fflate';
+import payload from './distribution-payload.json' with { type: 'json' };
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const source = join(root, 'site');
@@ -11,30 +12,36 @@ const { version } = JSON.parse(
 if (!/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(version)) {
   throw new Error('Expected a MAJOR.MINOR.PATCH project version');
 }
-const name = `html-skeleton-v${version}`;
+if (!/^[a-z0-9][a-z0-9._-]*$/.test(payload.prefix))
+  throw new Error(
+    'Expected a lowercase archive prefix without path separators',
+  );
+const name = `${payload.prefix}-v${version}`;
 // Explicit payload: never copy the repository tree or arbitrary asset contents.
-const files = [
-  'index.html',
-  '404.html',
-  'favicon.svg',
-  'robots.txt',
-  'site.webmanifest',
-  'assets/css/reset.css',
-  'assets/css/base.css',
-  'assets/css/layout.css',
-  'assets/css/components.css',
-  'assets/css/utilities.css',
-  'assets/js/main.js',
-];
-const directories = ['assets/images', 'assets/fonts', 'assets/icons'];
+const directories = [];
 const entries = {};
 // DOS timestamps encode local calendar fields. This produces the same bytes in
 // every timezone, regardless of source mtimes, permissions, or build time.
 const options = { level: 0, mtime: new Date(2000, 0, 1), os: 0, attrs: 0 };
-for (const file of files) {
-  if (!(await lstat(join(source, file))).isFile())
-    throw new Error(`Not a regular file: ${file}`);
+for (const [file, role] of Object.entries(payload.files)) {
+  if (!['required', 'optional'].includes(role))
+    throw new Error(`Unknown payload role for ${file}: ${role}`);
+  const stat = await lstat(join(source, file)).catch((error) => {
+    if (error.code !== 'ENOENT') throw error;
+    if (role === 'required')
+      throw new Error(`Missing required payload file: ${file}`);
+  });
+  if (!stat) continue;
+  if (!stat.isFile()) throw new Error(`Not a regular file: ${file}`);
   entries[file] = await readFile(join(source, file));
+}
+for (const directory of payload.directories) {
+  const stat = await lstat(join(source, directory)).catch((error) => {
+    if (error.code !== 'ENOENT') throw error;
+  });
+  if (!stat) continue;
+  if (!stat.isDirectory()) throw new Error(`Not a directory: ${directory}`);
+  directories.push(directory);
 }
 const zipEntries = Object.fromEntries(
   Object.entries(entries).map(([file, bytes]) => [

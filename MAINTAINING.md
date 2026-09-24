@@ -29,8 +29,8 @@ refer to the corresponding tag. Once published, release tags are immutable:
 do not move, replace, or delete them. Corrections requiring a different commit
 need a new version and tag.
 
-Pre-1.0 development begins at `0.1.0`; incompatible changes may occur before
-1.0. Document consumer impact in release notes. The repository has no automatic
+Incompatible changes may occur before 1.0. Document consumer impact in release
+notes. The repository has no automatic
 release-publishing workflow; maintainers publish through the authorized process
 below. `npm run build:distribution` builds local artifacts only.
 

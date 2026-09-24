@@ -39,6 +39,25 @@ Edit browser-facing sources only under `site/`. Keep repository tooling outside
 that document root and generated, ignored output in root-level `dist/`. Preserve
 the curated ZIP layout without a `site/` wrapper when changing source paths.
 
+Canonical validation checks Git-index paths (committed and newly staged files):
+HTML (`.html`/`.htm`), CSS, and `.webmanifest` belong under `site/` at any depth.
+These formats identify website source here; there are no tooling or documentation
+uses of them. The exact fixture exceptions in `scripts/check-source-boundary.mjs`
+are owned by regression tests; new exceptions require a specific test consumer.
+There is no blanket tests or documentation exemption. JavaScript is not restricted
+by this guard: tooling/test modules live outside `site/`, and ESLint's browser
+contract already applies inside `site/`. SVG, images, JSON, and other shared asset
+formats cannot reliably identify website content and remain unrestricted.
+Existing link fixtures are embedded strings/JSON; the boundary fixture is an
+explicit non-site HTML file. Configuration and governance files remain at root;
+ignored outputs/environments are absent from the index. Untracked files are not
+checked, so stage new sources before validation. Force-tracked generated HTML,
+CSS, or manifests receive no `dist/` exemption. Stage moves and deletions too: the
+index retains the old path until staged. The baseline structural test also retains
+the exact root-name checks, including `robots.txt`, `favicon.svg`, and `assets/`.
+Baseline test files run serially so nested canonical checks do not overlap the
+website baseline suite.
+
 ## Changing validation
 
 `.pre-commit-config.yaml` owns hook selection; `package.json` owns the web tool

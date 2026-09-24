@@ -11,17 +11,23 @@ const paths = execFileSync('git', ['ls-files', '--cached', '-z'], {
   cwd: root,
   encoding: 'utf8',
 }).split('\0');
-const outside = paths.filter(
-  (path) =>
-    /\.(?:html|css|webmanifest)$/i.test(path) &&
-    !path.startsWith('site/') &&
-    !fixtures.has(path),
-);
-for (const path of outside) {
-  console.error(
-    `${JSON.stringify(path)}: browser-facing source belongs under site/. ` +
-      'Stage moves and deletions before validation. ' +
-      'Non-site test fixtures require an exact, reviewed exception in scripts/check-source-boundary.mjs.',
-  );
+for (const path of paths) {
+  const extension = path.match(/\.(?:html?|css|webmanifest)$/i)?.[0];
+  if (!extension) continue;
+  const canonical = extension.toLowerCase().replace(/^\.htm$/, '.html');
+  if (extension !== canonical) {
+    console.error(
+      `${JSON.stringify(path)}: HTML Skeleton requires lowercase ${canonical} ` +
+        'by default; consumers may deliberately adapt their copy for another extension policy.',
+    );
+    process.exitCode = 1;
+  }
+  if (!path.startsWith('site/') && !fixtures.has(path)) {
+    console.error(
+      `${JSON.stringify(path)}: browser-facing source belongs under site/. ` +
+        'Stage moves and deletions before validation. ' +
+        'Non-site test fixtures require an exact, reviewed exception in scripts/check-source-boundary.mjs.',
+    );
+    process.exitCode = 1;
+  }
 }
-if (outside.length) process.exitCode = 1;

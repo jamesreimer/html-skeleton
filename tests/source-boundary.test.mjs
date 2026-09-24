@@ -58,6 +58,7 @@ const fixtureInputs = [
   'scripts/check-source-boundary.mjs',
   'scripts/check-site-links.mjs',
   'scripts/build-distribution.mjs',
+  'scripts/distribution-payload.json',
   'site',
   'tests/baseline.test.mjs',
   'tests/fixtures/source-boundary.html',
@@ -100,7 +101,7 @@ test('index boundary rejects staged and committed source without filename guesse
   for (const path of [
     'about.html',
     'nested/about.html',
-    'nested/page.HTM',
+    'nested/page.HTML',
     'tests/not-a-fixture.html',
     'tests/fixtures/unreviewed.html',
     'docs/example.html',
@@ -148,11 +149,13 @@ test('site pages receive native validation while explicit fixtures and tooling r
     await put(cwd, path, html);
     check(cwd, 'check:source-boundary');
     check(cwd, 'check:html');
+    check(cwd, 'check:site-links');
     await put(cwd, path, html.replace('<p>', '<img src="missing.png"><p>'));
     check(cwd, 'check:source-boundary');
     const output = check(cwd, 'check:html', false);
     assert.ok(output.includes(path), output);
     assert.match(output, /wcag\/h37/);
+    assert.match(check(cwd, 'check:site-links', false), /missing\.png/);
     await put(cwd, path, html);
   }
   for (const [path, contents] of [
@@ -172,6 +175,17 @@ test('site pages receive native validation while explicit fixtures and tooling r
   check(cwd, 'check:source-boundary');
   git(cwd, 'add', '-f', 'dist/about.html');
   assert.match(check(cwd, 'check:source-boundary', false), /dist\/about\.html/);
+});
+
+test('.htm is outside the supported page contract', async (t) => {
+  const cwd = await fixture(t);
+  // Unlinked .htm is neither classified by the boundary guard nor promised
+  // native HTML validation/discovery. Consumers must use lowercase .html.
+  for (const path of ['outside.htm', 'nested/page.HTM', 'site/unlinked.htm'])
+    await put(cwd, path, '<img src="missing.png">\n');
+  check(cwd, 'check:source-boundary');
+  check(cwd, 'check:html');
+  check(cwd, 'check:site-links');
 });
 
 test('canonical validation reports the staged boundary violation', async (t) => {
@@ -206,7 +220,7 @@ test('canonical validation reports the staged boundary violation', async (t) => 
 
 test('boundary CLI uses repository paths from every working directory and after staged moves', async (t) => {
   const cwd = await fixture(t);
-  const directories = ['', 'site', 'docs', 'site/assets/js'];
+  const directories = ['', 'site', 'docs', 'site/assets/css'];
   const checkEveryDirectory = (success) => {
     for (const directory of directories) {
       const result = spawnSync(

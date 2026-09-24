@@ -4,9 +4,8 @@ HTML Skeleton is a minimal HTML5, plain CSS, and vanilla JavaScript starting poi
 for framework-free websites. Serve `site/` directly: no framework,
 application runtime, bundler, or build step is required.
 
-The project is at **0.1.0**, a pre-1.0 baseline. It is not a finished theme or
-component library. Release automation, deployment, and npm scaffolding are outside
-the initial scope.
+HTML Skeleton is a minimal starter, not a finished theme or component library.
+Release automation, deployment, and npm scaffolding are outside its scope.
 
 ## Use the skeleton
 
@@ -14,7 +13,9 @@ Choose **Use this template** on
 [HTML Skeleton](https://github.com/jamesreimer/html-skeleton) to create a new
 repository with the website sources, validation, CI, documentation, and contributor
 guidance, including the `site/` source layout. Replace the site placeholders and
-adapt repository guidance to your project.
+adapt repository guidance to your project. Template creation uses the current
+default branch, which may include changes after the latest release. Record the
+source commit SHA and follow the [consumer identity guidance](docs/usage.md#start-from-github-template).
 **Generated consumer repositories do not automatically track upstream changes.**
 Consumers own their copies and choose which later changes to adopt.
 
@@ -85,11 +86,11 @@ tests. Use `npm run format` to apply source formatting. See
 npm run build:distribution
 ```
 
-With the current package version, this creates `dist/html-skeleton-v0.1.0/` and
-`dist/html-skeleton-v0.1.0.zip`. The explicit build rule includes 11 website files
-and empty image/font/icon directories from `site/`; it excludes governance, CI,
-tooling,
-documentation, dependencies, and `.gitkeep` placeholders. Root-level `dist/` is
+Using the version in `package.json`, this creates `dist/html-skeleton-vX.Y.Z/`
+and `dist/html-skeleton-vX.Y.Z.zip`. The [payload declaration](scripts/distribution-payload.json)
+selects required files, optional files that remain present, and retained empty
+asset directories from `site/`. It excludes governance, CI, tooling, documentation,
+dependencies, and `.gitkeep` placeholders. Root-level `dist/` is
 ignored by Git and stays outside `site/`. The ZIP retains its
 `html-skeleton-vX.Y.Z/` wrapper with website files directly inside it, without a
 `site/` wrapper. Minimal ZIP consumers receive only that website root.

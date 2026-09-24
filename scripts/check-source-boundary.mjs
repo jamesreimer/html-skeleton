@@ -13,7 +13,7 @@ const paths = execFileSync('git', ['ls-files', '--cached', '-z'], {
 }).split('\0');
 const outside = paths.filter(
   (path) =>
-    /\.(?:html?|css|webmanifest)$/i.test(path) &&
+    /\.(?:html|css|webmanifest)$/i.test(path) &&
     !path.startsWith('site/') &&
     !fixtures.has(path),
 );

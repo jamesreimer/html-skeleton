@@ -50,7 +50,9 @@ repository-wide, with browser globals for `site/**/*.js`.
 HTML Validate's Prettier preset disables conflicting formatting rules only.
 The maintained recommended/standard presets keep custom rule maintenance small.
 Website Linkinator checking follows local HTML and CSS references recursively
-from every HTML page using `site/` as the document root, including fragments. External
+from every HTML page using `site/` as the document root, including fragments. Every
+site CSS file is also an explicit crawl entry, including imported or unlinked
+stylesheets, so shared-resource caching cannot skip CSS reference checks. External
 origins are skipped. Manifest JSON is formatted; manifest semantics, metadata URLs, and custom runtime-created URLs
 are not comprehensively validated. Extend the entry points as the site grows.
 Project regression tests exercise actual CLIs in isolated Git repositories and

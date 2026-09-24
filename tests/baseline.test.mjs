@@ -276,3 +276,103 @@ test(
     }
   },
 );
+
+test('CSS references have equal coverage for every entry and crawl order', async (t) => {
+  const cwd = await fixture(t);
+  const site = join(cwd, 'site');
+  await rm(site, { recursive: true });
+  await mkdir(join(site, 'pages'), { recursive: true });
+  await mkdir(join(site, 'assets'), { recursive: true });
+  await writeFile(
+    join(site, 'asset.svg'),
+    '<svg xmlns="http://www.w3.org/2000/svg"/>',
+  );
+  const pages = ['404.html', 'index.html', 'pages/unlinked.html'];
+  const html = (stylesheet) =>
+    `<!doctype html><html lang="en"><head><title>Test</title>${stylesheet ? '<link rel="stylesheet" href="/assets/shared.css">' : ''}</head><body><p id="target">Test</p><a href="#target">Fragment</a></body></html>`;
+  // Perturb the public check options, not Linkinator internals or the validator.
+  // Run the actual entry point with both orders and serial/concurrent crawling.
+  await writeFile(
+    join(cwd, 'crawl-order.mjs'),
+    `import { LinkChecker } from 'linkinator';
+const check = LinkChecker.prototype.check;
+LinkChecker.prototype.check = function (options) {
+  if (process.env.REVERSE_ENTRIES === '1') options.path.reverse();
+  options.concurrency = Number(process.env.CRAWL_CONCURRENCY);
+  return check.call(this, options);
+};\n`,
+  );
+  const css = join(site, 'assets/shared.css');
+  const valid =
+    'body { background: url("/asset.svg"); mask-image: url("../asset.svg"); cursor: url("https://invalid.example.test/external.cur"), auto; }';
+  const invalid = 'body { background: url("/missing.svg"); }';
+  const check = async (success, reverse, concurrency) => {
+    const child = spawn(
+      node,
+      ['--import', './crawl-order.mjs', 'scripts/check-site-links.mjs'],
+      {
+        cwd,
+        timeout: 30000,
+        env: {
+          ...process.env,
+          REVERSE_ENTRIES: String(reverse),
+          CRAWL_CONCURRENCY: String(concurrency),
+        },
+      },
+    );
+    let output = '';
+    child.stdout.on('data', (data) => {
+      output += data;
+    });
+    child.stderr.on('data', (data) => {
+      output += data;
+    });
+    const code = await new Promise((resolve, reject) => {
+      child.on('error', reject);
+      child.on('close', resolve);
+    });
+    assert.equal(
+      code,
+      success ? 0 : 1,
+      `reverse=${reverse}, concurrency=${concurrency}: ${output}`,
+    );
+    if (!success) assert.match(output, /missing\.svg: 404/);
+  };
+  // Each isolated entry must detect the same reference, including unlinked pages.
+  for (const owner of pages) {
+    t.diagnostic(`CSS linked only from ${owner}`);
+    for (const page of pages)
+      await writeFile(join(site, page), html(page === owner));
+    await writeFile(css, valid);
+    await check(true, 0, 100);
+    await writeFile(css, invalid);
+    await check(false, 0, 100);
+  }
+  // Imported and unlinked CSS are explicit entries too, including their URLs.
+  const imported = join(site, 'assets/imported.css');
+  for (const linked of [true, false]) {
+    await writeFile(css, linked ? '@import url("./imported.css");' : valid);
+    await writeFile(imported, valid);
+    await check(true, 1, 100);
+    await writeFile(imported, invalid);
+    await check(false, 1, 100);
+  }
+  await rm(imported);
+  for (const page of pages) await writeFile(join(site, page), html(true));
+  // Shared CSS: repeat with both entry orders, both crawl concurrency settings,
+  // and concurrent checker processes. Root-relative assets exist only at site/.
+  for (const [contents, success] of [
+    [valid, true],
+    [invalid, false],
+  ]) {
+    await writeFile(css, contents);
+    for (let repeat = 0; repeat < 3; repeat++) {
+      await Promise.all([
+        check(success, 0, 1),
+        check(success, 1, 1),
+        check(success, 0, 100),
+        check(success, 1, 100),
+      ]);
+    }
+  }
+});

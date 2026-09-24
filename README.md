@@ -1,98 +1,84 @@
 # HTML Skeleton
 
-A small HTML5, plain CSS, and vanilla JavaScript foundation for framework-free
-websites. Version **0.1.0** is a pre-1.0 baseline. Serve the website files directly;
-no application runtime or build step is required.
+HTML Skeleton is a minimal HTML5, plain CSS, and vanilla JavaScript starting point
+for framework-free websites. Serve the website files directly: no framework,
+application runtime, bundler, or build step is required.
 
-This is a starting point, not a theme, component library, framework, or finished
-site. It includes no bundler, analytics, CMS, server code, deployment automation,
-or npm scaffolding package.
+The project is at **0.1.0**, a pre-1.0 baseline. It is not a finished theme or
+component library. Release automation, deployment, and npm scaffolding are outside
+the initial scope.
 
 ## Use the skeleton
 
-### GitHub Template
-
 Choose **Use this template** on
-[html-skeleton](https://github.com/jamesreimer/html-skeleton) to create an independent
-repository with source, checks, CI, documentation, and contributor guidance.
-Replace the site placeholders and adapt repository guidance to your project.
-Consumers own their copies; upstream changes do not synchronize automatically.
+[HTML Skeleton](https://github.com/jamesreimer/html-skeleton) to create a new
+repository with the website sources, validation, CI, documentation, and contributor
+guidance. Replace the site placeholders and adapt repository guidance to your project.
+**Generated consumer repositories do not automatically track upstream changes.**
+Consumers own their copies and choose which later changes to adopt.
 
-### Minimal distribution
+Future tagged releases will attach a curated `html-skeleton-vX.Y.Z.zip` containing
+only the website foundation. GitHub's automatically generated source archives
+contain the full repository and are different. This initial implementation builds
+the curated ZIP locally; it does not publish a release.
 
-Future tagged releases may attach `html-skeleton-vX.Y.Z.zip`. Extract it and serve
-the enclosed directory. This curated asset contains only the website foundation;
-GitHub's automatic source ZIPs contain the full repository and are different.
-This initial implementation does not publish a release. Build a local candidate
-with `npm run build:distribution` after installing the repository dependencies.
+See [usage](docs/usage.md) for customization, template versus ZIP consumption,
+static-server preview, and the 404 page's hosting assumptions.
 
-See [usage](docs/usage.md) for customization and serving details.
+## Repository structure
+
+- `index.html`, `404.html`: sparse semantic pages.
+- `favicon.svg`, `robots.txt`, `site.webmanifest`: site metadata and primitives.
+- `assets/css/`: reset, base styles, layout, components, and utilities.
+- `assets/js/main.js`: optional, currently comment-only entry point.
+- `assets/images/`, `assets/fonts/`, `assets/icons/`: empty asset locations.
+- `docs/`: [architecture](docs/architecture.md), [accessibility](docs/accessibility.md),
+  and [usage](docs/usage.md).
+- `scripts/`, `tools/`, `tests/`: repository validation and distribution tooling.
+- `.github/workflows/validate.yml`: CI using the canonical validation command.
 
 ## Run checks
 
-Use Node.js 24.18.1 (including npm) and Python 3.10 or later. From the repository root:
+Repository tooling requires Node.js 24.18.1 (including npm) and Python 3.10 or later.
+From the repository root:
 
 ```sh
 npm ci --ignore-scripts
 python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements-dev.txt
-git add <intended-new-files>
 npm run validate
-git diff --check
 ```
 
-On Windows, use `.venv\Scripts\python.exe` for setup. The validation launcher
-selects the platform's local virtual environment, falling back to `pre-commit`
-on PATH (as in CI). Initial hook setup requires network access; link validation
-is offline. Checks may fix whitespace; review fixes and rerun. New files must be
-staged because inherited checks use Git's tracked-file selection.
+On Windows, use `.venv\Scripts\python.exe` for setup. Stage intended new files before
+validation so inherited Git-based checks see them. The launcher uses the local
+virtual environment or the pinned `pre-commit` runner on PATH. Initial setup needs
+network access; link checking is offline. Review any automatic fixes and rerun.
 
 `npm run validate` is the complete local and CI contract: inherited repository
-hygiene, Markdown and workflow checks, Prettier formatting, HTML Validate,
-Stylelint, ESLint, local links/references, and regression/distribution tests.
-`npm run format` applies source formatting. Markdown retains the inherited
-Markdownlint rules; Python retains Ruff. External URLs are not requested.
-These checks do not prove accessibility or overall correctness.
+checks, formatting, HTML, CSS, JavaScript, local links, and regression/distribution
+tests. Use `npm run format` to apply source formatting. See
+[CONTRIBUTING.md](CONTRIBUTING.md) for check coverage and maintenance.
 
-Optionally install the commit hook with `.venv/bin/pre-commit install`.
-See [CONTRIBUTING.md](CONTRIBUTING.md) for scope and maintenance.
-
-## Distribution build
+## Build the minimal distribution
 
 ```sh
 npm run build:distribution
 ```
 
-The explicit rule in [scripts/build-distribution.mjs](scripts/build-distribution.mjs)
-reads the version from `package.json`, creates `dist/html-skeleton-v0.1.0/`, and
-writes `dist/html-skeleton-v0.1.0.zip`. It includes the two HTML pages, favicon,
-robots file, manifest, five CSS files, JavaScript entry point, and empty images,
-fonts, and icons directories. Repository-only files and `.gitkeep` placeholders
-are excluded. Missing required source files fail before replacing output.
-Fixed ZIP metadata and entry order make unchanged inputs byte-identical.
-Generated output is ignored by Git. Rebuild after editing source.
+With the current package version, this creates `dist/html-skeleton-v0.1.0/` and
+`dist/html-skeleton-v0.1.0.zip`. The explicit build rule includes 11 website files
+and empty image/font/icon directories; it excludes governance, CI, tooling,
+documentation, dependencies, and `.gitkeep` placeholders. Output is ignored by Git.
+See [architecture](docs/architecture.md#tooling-boundary) for ownership and extension.
 
-## Repository map
+## Provenance and contribution
 
-- `index.html`, `404.html`: sparse semantic pages.
-- `assets/css/`: reset, element defaults, layout, components, utilities.
-- `assets/js/main.js`: optional, currently comment-only entry point.
-- `assets/images/`, `assets/fonts/`, `assets/icons/`: empty asset locations.
-- `docs/`: [architecture](docs/architecture.md), [accessibility](docs/accessibility.md),
-  and [usage](docs/usage.md).
-- `scripts/`: validation entry point, website link check, distribution assembly.
-- `tools/`, `tests/`: inherited checks and project regression evidence.
-- `.github/workflows/validate.yml`: the same validation contract in CI.
+Derived from [repo-template](https://github.com/jamesreimer/repo-template), HTML
+Skeleton owns its adapted baseline and retains the inherited [CC0 license](LICENSE).
+No external standards are adopted. Applicable inherited checks and workflow rules
+remain in effect.
 
-## Ownership and maintenance
-
-Derived from [repo-template](https://github.com/jamesreimer/repo-template).
-HTML Skeleton owns its adapted baseline; no external standards are adopted.
-Applicable inherited checks, contributor guidance, and human release authority
-are preserved. Consumer update required: no automatic propagation; adoption is
-explicit and consumer-owned. The project retains the inherited [CC0 license](LICENSE).
-
-Changes use a work branch and PR. Review, merge, release, and deployment are
-separate actions; see [AGENTS.md](AGENTS.md), [CONTRIBUTING.md](CONTRIBUTING.md), and
-[MAINTAINING.md](MAINTAINING.md). The inherited [ruleset](rulesets/README.md) is an
-optional installation baseline, not proof of live branch protection.
+Use a focused branch and pull request; see [CONTRIBUTING.md](CONTRIBUTING.md) and
+[AGENTS.md](AGENTS.md). Release publication follows [MAINTAINING.md](MAINTAINING.md)
+and requires separate authorization. See [SECURITY.md](SECURITY.md) for vulnerability
+reporting and [ruleset guidance](rulesets/README.md) for default-branch protection.

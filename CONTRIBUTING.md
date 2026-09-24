@@ -40,9 +40,11 @@ that document root and generated, ignored output in root-level `dist/`. Preserve
 the curated ZIP layout without a `site/` wrapper when changing source paths.
 
 Canonical validation checks Git-index paths (committed and newly staged files):
-HTML (`.html`), CSS, and `.webmanifest` belong under `site/` at any depth.
-Use lowercase `.html` for pages; `.htm` is outside the supported page contract
-and is not classified by this guard or selected as an HTML/site-link entry.
+Pages (`.html`), stylesheets (`.css`), and manifests (`.webmanifest`) require
+these lowercase extensions and belong under `site/` at any depth. The guard
+rejects mixed/uppercase extension variants and `.htm`; `.htm` is not selected
+as an HTML/site-link entry. Consumers may deliberately adapt their own copy
+for another extension policy, including its validation and discovery rules.
 Incidental crawling of a linked file is not supported extension coverage.
 These formats identify website source here; there are no tooling or documentation
 uses of them. The exact fixture exceptions in `scripts/check-source-boundary.mjs`

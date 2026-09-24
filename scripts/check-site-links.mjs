@@ -1,10 +1,16 @@
+import { glob } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import { LinkChecker } from 'linkinator';
+
+const site = fileURLToPath(new URL('../site/', import.meta.url));
+const pages = [];
+for await (const page of glob('**/*.html', { cwd: site })) pages.push(page);
 
 let origin;
 const result = await new LinkChecker().check({
-  // Start at the directory root so recursive crawling includes sibling assets.
-  path: ['.', '404.html'],
-  serverRoot: process.cwd(),
+  // Check every HTML entry, including pages not linked from the home page.
+  path: ['.', ...pages],
+  serverRoot: site,
   recurse: true,
   checkFragments: true,
   checkCss: true,

@@ -3,7 +3,8 @@
 ## Start from GitHub Template
 
 Choose **Use this template** on the repository, name your new project, then clone
-it. This includes all documentation, validation, CI, and contributor guidance.
+it. This includes the `site/` website sources plus root-level documentation,
+validation, CI, and contributor guidance.
 Follow [setup](../README.md#run-checks) before changing sources. Review repository
 ownership, license, security reporting, ruleset installation, and release guidance
 for your project. Creating a repository does not install branch protection.
@@ -14,7 +15,8 @@ When a tagged release supplies `html-skeleton-vX.Y.Z.zip`, download that attache
 asset and extract it. GitHub-generated source archives are full repository
 snapshots, not this curated distribution. The initial baseline only builds the ZIP
 locally; it does not create a release. Minimal ZIP users receive no repository
-checks, governance, or development documentation.
+checks, governance, or development documentation. The archive keeps its versioned
+wrapper; the website files are directly inside it, without a `site/` directory.
 
 Both paths create independent files. There is no automatic upstream synchronization.
 
@@ -26,8 +28,11 @@ with visible content. Add canonical and social URLs/images only once real public
 addresses exist. Review `robots.txt` for the intended crawl policy; it is not access
 control. The manifest is a basic browser manifest, not an offline/PWA implementation.
 
-The home page uses relative asset links. `404.html` uses origin-root links so a
-server can return it for nested missing paths. If hosting under a subpath, change
+Edit website files under `site/` in a template checkout, or directly in the
+website root of an extracted distribution. The home page uses relative asset links.
+`404.html` uses origin-root links so a
+server can return it for nested missing paths. These origin-root URLs resolve
+inside `site/` when it is the document root. If hosting under a subpath, change
 those links to your actual base path. Configure your eventual host to return the
 404 document with HTTP status 404; this repository includes no host configuration.
 
@@ -39,14 +44,17 @@ changes must also update the distribution rule and tests.
 
 ## Preview without a build
 
-Any static server can serve the source root or extracted distribution. For example,
-with Python installed:
+Serve `site/` as the document root, not the repository root. Repository governance
+and tooling files should not be publicly served. No build or Node runtime is
+needed. For example, from a template checkout with Python installed:
 
 ```sh
-python3 -m http.server 8000 --bind 127.0.0.1
+python3 -m http.server 8000 --bind 127.0.0.1 --directory site
 ```
 
 Open `http://127.0.0.1:8000/` and `/404.html`. For local distribution testing, change
-into `dist/html-skeleton-v0.1.0/` first. The server is a local preview tool, not an
+into `dist/html-skeleton-v0.1.0/` first and omit `--directory site`. Root-level
+`dist/` is generated and ignored by Git; do not edit it as canonical source.
+The server is a local preview tool, not an
 application dependency. The basic Python server does not route missing URLs to
 the custom 404 document automatically.

@@ -33,18 +33,25 @@ configuration and a separate host verification procedure. When changing the
 required job's name, source, or triggers, reconcile the live required check with
 the workflow so every pull request targeting the protected branch can report it.
 
+## Source layout
+
+Edit browser-facing sources only under `site/`. Keep repository tooling outside
+that document root and generated, ignored output in root-level `dist/`. Preserve
+the curated ZIP layout without a `site/` wrapper when changing source paths.
+
 ## Changing validation
 
 `.pre-commit-config.yaml` owns hook selection; `package.json` owns the web tool
 commands it calls. `npm run validate` is the complete contract. Prettier checks
 supported source/config formats except the explicitly excluded inherited tools,
-fixtures, and Markdown (see `.prettierignore`). HTML Validate checks root HTML;
-Stylelint checks `assets/css/**/*.css`; ESLint checks JavaScript repository-wide.
+fixtures, and Markdown (see `.prettierignore`). HTML Validate checks
+`site/**/*.html`; Stylelint checks `site/**/*.css`; ESLint checks JavaScript
+repository-wide, with browser globals for `site/**/*.js`.
 HTML Validate's Prettier preset disables conflicting formatting rules only.
 The maintained recommended/standard presets keep custom rule maintenance small.
 Website Linkinator checking follows local HTML and CSS references recursively
-from both pages, including fragments. External origins are skipped. Manifest JSON
-is formatted; manifest semantics, metadata URLs, and custom runtime-created URLs
+from every HTML page using `site/` as the document root, including fragments. External
+origins are skipped. Manifest JSON is formatted; manifest semantics, metadata URLs, and custom runtime-created URLs
 are not comprehensively validated. Extend the entry points as the site grows.
 Project regression tests exercise actual CLIs in isolated Git repositories and
 check exact archive contents, missing inputs, versioning, and repeatable bytes.
@@ -54,8 +61,10 @@ in `.markdownlint-cli2.jsonc`; Python rules live in `ruff.toml`. Use the tools'
 native configuration when project requirements change. Make exclusions explicit
 and explain substantive coverage reductions in the pull request.
 
-Linkinator checks Markdown and HTML links offline, including fragments. It runs as a
-fresh process through `tools/check-links.mjs`, with exact dependencies in
+The repository Linkinator hook checks Markdown and non-site HTML links offline,
+including fragments. Website HTML is excluded from this hook because the
+separate site checker resolves origin-root URLs against `site/`. The repository
+hook runs as a fresh process through `tools/check-links.mjs`, with exact dependencies in
 `package.json` and `package-lock.json`. A startup probe verifies that front matter
 is excluded by the renderer actually used by Linkinator; an ineffective hook
 stops validation before repository content is read. External HTTP/HTTPS links

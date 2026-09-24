@@ -1,6 +1,9 @@
 # Maintaining HTML Skeleton
 
 This document owns release preparation and publication for `html-skeleton`.
+Canonical website inputs live under `site/`; generated artifacts stay in
+root-level, Git-ignored `dist/`. The curated archive contains website files
+directly inside its versioned wrapper, without an additional `site/` directory.
 Ordinary changes follow [CONTRIBUTING.md](CONTRIBUTING.md). The project version
 in `package.json` is authoritative; update it and its lock
 file through the contribution workflow before preparing a release.

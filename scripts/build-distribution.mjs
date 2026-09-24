@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { zipSync } from 'fflate';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
+const source = join(root, 'site');
 const { version } = JSON.parse(
   await readFile(join(root, 'package.json'), 'utf8'),
 );
@@ -31,9 +32,9 @@ const entries = {};
 // every timezone, regardless of source mtimes, permissions, or build time.
 const options = { level: 0, mtime: new Date(2000, 0, 1), os: 0, attrs: 0 };
 for (const file of files) {
-  if (!(await lstat(join(root, file))).isFile())
+  if (!(await lstat(join(source, file))).isFile())
     throw new Error(`Not a regular file: ${file}`);
-  entries[file] = await readFile(join(root, file));
+  entries[file] = await readFile(join(source, file));
 }
 const zipEntries = Object.fromEntries(
   Object.entries(entries).map(([file, bytes]) => [

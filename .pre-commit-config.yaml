@@ -40,6 +40,8 @@ repos:
         language: system
         entry: node tools/check-links.mjs
         types_or: [markdown, html]
+        # Website HTML uses site/ as its document root in the site-links hook.
+        exclude: ^site/.*\.html$
       - id: test-link-validation
         name: Test local link validation
         language: system

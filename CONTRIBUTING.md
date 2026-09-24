@@ -1,4 +1,4 @@
-# Contributing
+# Contributing to HTML Skeleton
 
 Keep changes tied to a concrete requirement or defect. Explain changes to the
 baseline in terms of their benefit and maintenance cost for consuming repositories.
@@ -9,7 +9,7 @@ a release.
 ## Workflow
 
 Use a descriptive branch and pull request title that identify the work. No
-specific prefix vocabulary or commit-message format is required by the template.
+specific prefix vocabulary or commit-message format is required by HTML Skeleton.
 
 Follow the [setup instructions](README.md#run-checks), stage intended new files,
 and run:

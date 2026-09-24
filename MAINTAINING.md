@@ -1,4 +1,4 @@
-# Maintaining html-skeleton
+# Maintaining HTML Skeleton
 
 This document owns release preparation and publication for `html-skeleton`.
 Ordinary changes follow [CONTRIBUTING.md](CONTRIBUTING.md). The project version
@@ -16,7 +16,7 @@ Choose the version by reviewing the changes since the previous release and
 their impact on consuming repositories.
 
 Use the complete Git tag as the GitHub Release title, for example `v1.2.1`.
-This is the template's default display convention; Semantic Versioning governs
+This is HTML Skeleton's release display convention; Semantic Versioning governs
 version numbers, not release titles. Consumers may document a different local
 title convention. The editable title does not replace the immutable tag or its
 verified target.

@@ -1,7 +1,7 @@
-# Default-branch ruleset
+# HTML Skeleton default-branch ruleset
 
-[default-branch.json](default-branch.json) is the reusable GitHub configuration
-for this template. It targets the repository's default branch and supplies:
+[default-branch.json](default-branch.json) defines HTML Skeleton's GitHub
+default-branch protection. It targets the repository's default branch and supplies:
 
 - Active protection against branch deletion and force pushes.
 - Pull requests with squash-only merges and resolved review conversations.
@@ -12,6 +12,10 @@ for this template. It targets the repository's default branch and supplies:
 Zero required approvals does not waive a project's separately required review.
 Consumers own their host settings and may deliberately adapt this baseline to
 their actual requirements, preserving any additional local protections.
+
+The [installed HTML Skeleton ruleset](https://github.com/jamesreimer/html-skeleton/rules/23945959)
+is the live configuration. Verify it against this file when reconciling settings;
+consumer repositories must install their own protection deliberately.
 
 ## Before installation
 
@@ -27,7 +31,7 @@ Run the commands from the checkout root. Set `repo` to the intended repository
 and `evidence` to a new directory outside the checkout for snapshots:
 
 ```sh
-repo='OWNER/REPOSITORY'
+repo='jamesreimer/html-skeleton'
 evidence='/absolute/path/to/new-ruleset-evidence'
 mkdir "$evidence"
 gh api "repos/$repo" --jq '{full_name, default_branch, permissions}'

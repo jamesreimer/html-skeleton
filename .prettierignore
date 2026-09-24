@@ -1,0 +1,11 @@
+node_modules/
+.venv/
+dist/
+# Markdown and repository hygiene remain owned by inherited checks.
+**/*.md
+# Existing parser fixtures and template tools retain their inherited formatting.
+tools/
+tests/link-validation/
+tests/link-validation.test.mjs
+tests/markdown-rules.test.cjs
+markdownlint-rules/

@@ -1,4 +1,4 @@
-minimum_pre_commit_version: "4.6.2"
+minimum_pre_commit_version: '4.6.2'
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -23,12 +23,12 @@ repos:
     rev: 916ad0aaa108c64d294101002066f530ea170b10 # v0.23.3
     hooks:
       - id: markdownlint-cli2
-        language_version: "24.18.1"
+        language_version: '24.18.1'
       - id: markdownlint-cli2
         alias: test-markdown-rules
         name: Test Markdown authoring rules
         entry: node --test tests/markdown-rules.test.cjs
-        language_version: "24.18.1"
+        language_version: '24.18.1'
         types: [file]
         always_run: true
         pass_filenames: false
@@ -36,14 +36,51 @@ repos:
   - repo: local
     hooks:
       - id: linkinator
-        name: Check local Markdown links
+        name: Check local Markdown and HTML links
         language: system
         entry: node tools/check-links.mjs
-        types: [markdown]
+        types_or: [markdown, html]
       - id: test-link-validation
         name: Test local link validation
         language: system
         entry: npm run test:links
+        always_run: true
+        pass_filenames: false
+
+      - id: web-format
+        name: Check source formatting
+        language: system
+        entry: npm run check:format
+        always_run: true
+        pass_filenames: false
+      - id: web-html
+        name: Validate HTML
+        language: system
+        entry: npm run check:html
+        always_run: true
+        pass_filenames: false
+      - id: web-css
+        name: Lint CSS
+        language: system
+        entry: npm run check:css
+        always_run: true
+        pass_filenames: false
+      - id: web-js
+        name: Lint JavaScript
+        language: system
+        entry: npm run check:js
+        always_run: true
+        pass_filenames: false
+      - id: site-links
+        name: Check website links and CSS references
+        language: system
+        entry: npm run check:site-links
+        always_run: true
+        pass_filenames: false
+      - id: test-baseline
+        name: Test website validation and distribution
+        language: system
+        entry: npm run test:baseline
         always_run: true
         pass_filenames: false
 

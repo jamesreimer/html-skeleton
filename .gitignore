@@ -21,3 +21,6 @@ node_modules/
 !.env.sample
 !.env.*.example
 !.env.*.sample
+
+# Generated consumer payload
+dist/

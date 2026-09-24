@@ -3,13 +3,11 @@
 ## Authority and scope
 
 Read [README.md](README.md) and [CONTRIBUTING.md](CONTRIBUTING.md) before changing
-this baseline. No external standards are adopted by this template.
-
-Consumers: replace this paragraph with links to your actual governing standards
-or authority entry point, if any. Route work to every applicable standard within
-its scope; do not assume architectural reasoning governs adoption, execution,
-naming, repository responsibility, or shared-asset maintenance. Do not import
-authority merely because a document is available or supplied by another repo.
+HTML Skeleton. The initial implementation follows
+[Issue #1](https://github.com/jamesreimer/html-skeleton/issues/1).
+This repository owns its adapted baseline; no external standards are adopted.
+Consumers own their copies and should replace these links with their actual
+project authority entry points. Source location alone does not confer authority.
 
 Repository configuration expresses implementation choices. When a choice
 obstructs an authorized requirement, evaluate and correct it within the granted
@@ -36,7 +34,7 @@ presence of an old rule is not itself a reason to request permission again.
 Stage intended new files so the runner sees them, then run:
 
 ```sh
-.venv/bin/pre-commit run --all-files --show-diff-on-failure
+npm run validate
 git diff --check
 ```
 

@@ -1,8 +1,9 @@
-# Maintaining repo-template
+# Maintaining html-skeleton
 
-This document owns release preparation and publication for `repo-template`.
-Ordinary changes follow [CONTRIBUTING.md](CONTRIBUTING.md). Repositories created
-from this template should adapt this procedure to their own release needs.
+This document owns release preparation and publication for `html-skeleton`.
+Ordinary changes follow [CONTRIBUTING.md](CONTRIBUTING.md). The project version
+in `package.json` is authoritative; update it and its lock
+file through the contribution workflow before preparing a release.
 Permission to contribute a change does not grant permission to publish a release.
 
 ## Release identifiers
@@ -25,14 +26,13 @@ refer to the corresponding tag. Once published, release tags are immutable:
 do not move, replace, or delete them. Corrections requiring a different commit
 need a new version and tag.
 
-The historical tags `v1.0.0` and `v1.0.1` are annotated; `v1.0.2` is lightweight.
-This inconsistency predates this guidance. Preserve all existing published tags,
-including `v1.0.2`; do not rewrite them to normalize tag type.
+Pre-1.0 development begins at `0.1.0`; incompatible changes may occur before
+1.0. Document consumer impact in release notes. This baseline creates no release.
 
 ## Prepare the release
 
 1. Fetch the current default branch (`main`) and tags from `origin`. Confirm
-   that `origin` is `jamesreimer/repo-template` and the working tree is clean.
+   that `origin` is `jamesreimer/html-skeleton` and the working tree is clean.
 2. Select the intended release commit from reviewed, merged work on `main`.
    Record its full commit SHA and check it out for validation. Review the changes
    since the previous release, including documentation, dependency updates, and
@@ -40,15 +40,18 @@ including `v1.0.2`; do not rewrite them to normalize tag type.
 3. Follow the [setup instructions](README.md#run-checks), then run:
 
    ```sh
-   .venv/bin/pre-commit run --all-files --show-diff-on-failure
+   npm run validate
+   npm run build:distribution
    git diff --check
    ```
 
    Require passing checks and a clean working tree. If checks fix files or a
    defect needs correction, submit the change through the contribution workflow
    and select and validate the resulting merged commit before proceeding.
-4. Choose an unused version. Check both local and remote tags and existing
-   [GitHub Releases](https://github.com/jamesreimer/repo-template/releases).
+4. Use the unused version recorded in `package.json`; require the tag to be `v`
+   followed by that exact version. Inspect the generated ZIP against the explicit
+   payload rule and tests. Check both local and remote tags and existing
+   [GitHub Releases](https://github.com/jamesreimer/html-skeleton/releases).
    Prepare release notes describing the changes, consumer impact, and any
    adoption steps. Keep the notes outside the checkout so it remains clean.
 
@@ -73,7 +76,7 @@ A failed fetch or any other error also stops the release. Use the merged commit,
 which may differ from the reviewed PR-head SHA after a squash merge.
 
 ```sh
-git tag -a "$tag" "$release_commit" -m "repo-template $tag"
+git tag -a "$tag" "$release_commit" -m "html-skeleton $tag"
 ```
 
 Verify both the tag object's type and the commit it resolves to:
@@ -116,9 +119,9 @@ the peeled entry required for an annotated tag. Any failure stops publication;
 investigate without overwriting a published tag.
 
 ```sh
-gh release create "$tag" --repo jamesreimer/repo-template --verify-tag \
-  --title "$tag" --notes-file "$notes_file"
-gh release view "$tag" --repo jamesreimer/repo-template \
+gh release create "$tag" --repo jamesreimer/html-skeleton --verify-tag \
+  --title "$tag" --notes-file "$notes_file" "dist/html-skeleton-$tag.zip"
+gh release view "$tag" --repo jamesreimer/html-skeleton \
   --json url,tagName,name,isDraft,isPrerelease,publishedAt,body
 verify_remote_tag
 ```
@@ -127,7 +130,9 @@ verify_remote_tag
 the intended commit, which the earlier checks establish. After publication,
 confirm the release is published (not a draft or prerelease), its title follows
 the naming convention above, its tag and notes
-are correct, and its page and source archives are available. Recheck the remote
+are correct, and its page, source archives, and curated distribution asset are
+available. Download the attached ZIP and compare its SHA-256 with the locally
+validated artifact. GitHub source archives do not replace the curated ZIP. Recheck the remote
 tag object and peeled commit against the same expected SHAs. If publication
 fails after the tag push, inspect the remote tag and release state before
 retrying; preserve the published tag.

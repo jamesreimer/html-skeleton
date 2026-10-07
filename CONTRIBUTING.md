@@ -1,7 +1,8 @@
 # Contributing to HTML Skeleton
 
 Keep changes tied to a concrete requirement or defect. Explain changes to the
-baseline in terms of their benefit and maintenance cost for consuming repositories.
+baseline in terms of coherent responsibility, present benefit, maintenance cost,
+and cost of deferral for consuming repositories, including evidence lost by waiting.
 
 Maintainers: follow [MAINTAINING.md](MAINTAINING.md) when preparing or publishing
 a release.
@@ -10,6 +11,17 @@ a release.
 
 Use a descriptive branch and pull request title that identify the work. No
 specific prefix vocabulary or commit-message format is required by HTML Skeleton.
+
+Record notable changes through the [changelog workflow](#changelog) while context
+is fresh. Update other deliberately selected historical artifacts alongside the
+change that creates the historical fact.
+
+Choose issue relationships per issue's substantive completion boundary. Use a
+closing relationship when merge completes all substantive obligations. Use a
+non-closing reference when material obligations remain after merge, and close
+the issue when those obligations are complete. Routine branch cleanup, local
+synchronization, or workspace cleanup alone does not keep an otherwise complete
+issue open.
 
 Follow the [setup instructions](README.md#run-checks), stage intended new files,
 and run:
@@ -32,6 +44,39 @@ The [default-branch ruleset](rulesets/README.md) supplies a reusable starting
 configuration and a separate host verification procedure. When changing the
 required job's name, source, or triggers, reconcile the live required check with
 the workflow so every pull request targeting the protected branch can report it.
+
+## Changelog
+
+[CHANGELOG.md](CHANGELOG.md) uses [Common Changelog](https://common-changelog.org/)
+for format only. It provides concise, durable interpretation of notable releases.
+Git owns exact history; PRs and issues retain implementation and decision evidence;
+GitHub Releases retain publication records and release-specific notes; canonical
+files define current behavior. HTML Skeleton owns its contribution and release
+mechanics, and the changelog does not replace these other records.
+
+Every PR must carry a concise proposed changelog summary with supporting references,
+or explain why the change is not notable. Capture consumer and compatibility
+implications while context is fresh. Reviewers verify the summary against the
+final candidate. Curate meaningful baseline, validation, maintenance, and release
+changes; routine dependency bumps and trivial edits need not become release entries.
+
+Common Changelog requires relevant commit references and also illustrates PR
+references. HTML Skeleton uses a PR as the durable reference for a same-PR change
+whose canonical squash commit does not yet exist. The live protected `main`
+[ruleset](https://github.com/jamesreimer/html-skeleton/rules/23945959) permits squash
+only. When an appropriate canonical `main` commit already exists, cite it and
+include its PR where useful. Do not cite pre-squash commits that will not belong
+to canonical `main`. A PR selected for the same-PR case is final: do not retrofit
+the later squash SHA solely because it becomes available. These references serve
+history and navigation; they do not replace candidate identity, publication
+identity, or release verification.
+
+Retain pending summaries in PR descriptions until actual release facts are known.
+Do not add an `Unreleased` section, invent a future version/date, or assign new
+changes to an already published release. Once a release section is being prepared,
+update it in the same PR as further notable changes included in that release.
+Maintainers reconcile the whole release delta and earlier retained summaries
+under [release preparation](MAINTAINING.md#prepare-the-release).
 
 ## Source layout
 

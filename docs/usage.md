@@ -21,6 +21,18 @@ and agent guidance. Package name and archive prefix are separate choices. Use a
 lowercase archive prefix without path separators. Nothing renames these values
 automatically, and the upstream release procedure is not a consumer release target.
 
+The inherited [CHANGELOG.md](../CHANGELOG.md) records HTML Skeleton's history,
+not your project's. Deliberately review/reset it: remove HTML Skeleton release
+entries and release links. If keeping a changelog, retain Common Changelog
+formatting and begin your own history at your first relevant release/state;
+do not invent an earlier release, version, date, or contemporaneous history.
+
+The squash-only durable-reference guidance in [CONTRIBUTING.md](../CONTRIBUTING.md#changelog)
+depends on HTML Skeleton's own live host configuration. Establish your project's
+merge and ruleset behavior before applying that reference rule: copying HTML
+Skeleton does not install its ruleset. Your repository remains independently
+governed and does not automatically track HTML Skeleton.
+
 ## Start from a minimal ZIP
 
 When a tagged release supplies `html-skeleton-vX.Y.Z.zip`, download that attached

@@ -10,7 +10,11 @@ The browser-facing source-root contract follows
 directly servable sources, the root owns repository tooling and guidance, and
 root-level `dist/` contains generated, ignored output only. Preserve the consumer
 ZIP layout without a `site/` wrapper.
-This repository owns its adapted baseline; no external standards are adopted.
+This repository owns its adapted baseline. [Common Changelog](https://common-changelog.org/)
+governs changelog format only; HTML Skeleton owns contribution and release
+mechanics in [CONTRIBUTING.md](CONTRIBUTING.md#changelog) and
+[MAINTAINING.md](MAINTAINING.md#prepare-the-release). No other external standards
+are adopted.
 Consumers own their copies and should replace these links with their actual
 project authority entry points. Source location alone does not confer authority.
 
@@ -28,7 +32,12 @@ presence of an old rule is not itself a reason to request permission again.
 - For substantive changes, identify the requirement, affected responsibilities,
   consumer impact, and evidence needed to establish correctness.
 - Prefer maintained tools to custom parsers and validation frameworks. Add a
-  dependency, file, or control only for a concrete benefit worth its upkeep.
+  dependency, file, or control only after evaluating its coherent responsibility,
+  present benefit, maintenance cost, and cost of deferral. Delaying historical
+  records can lose evidence or make reconstruction unreliable; preserve
+  contemporaneous recording for deliberately selected artifacts even when their
+  initial content is small. This does not justify speculative schemas,
+  registries, dashboards, ledgers, or automation.
 - Evaluate findings on their merits. A non-blocking classification alone does
   not justify deferral; neither does it require unrelated cleanup.
 - Use a descriptive work branch and prepare a reviewable pull request. Do not

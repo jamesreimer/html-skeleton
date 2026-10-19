@@ -38,11 +38,53 @@ below. `npm run build:distribution` builds local artifacts only.
 
 1. Fetch the current default branch (`main`) and tags from `origin`. Confirm
    that `origin` is `jamesreimer/html-skeleton` and the working tree is clean.
-2. Select the intended release commit from reviewed, merged work on `main`.
+2. Prepare the release section through the ordinary reviewed PR workflow. Establish
+   the intended version, release scope, and intended UTC publication date. The
+   version must agree with authoritative `package.json` and corresponding lock
+   state under the version procedure above, and be unused in local/remote tags
+   and [GitHub Releases](https://github.com/jamesreimer/html-skeleton/releases).
+   Account for every change since the previous release against
+   [retained PR summaries](CONTRIBUTING.md#changelog), including earlier summaries;
+   ensure every notable change is represented and resolve missing or unclear
+   interpretation using authors and retained evidence.
+
+   The section may accompany a release-bearing change in the same PR when all
+   three release facts are established. Complete whole-release-delta accounting
+   before merge. Earlier canonical changes may cite their commits; the current
+   change cites its PR because protected `main` permits squash only and its
+   canonical commit does not yet exist. Follow the final
+   [durable-reference rules](CONTRIBUTING.md#changelog); these links do not replace
+   exact candidate or publication identity checks.
+
+   Use a separate reviewed changelog-preparation PR when version, scope, or
+   intended UTC publication date is unknown, when the substantive change already
+   merged without the section, or when correction is needed after merge. Establish
+   missing facts before preparing that section. Aggregation alone does not
+   require a separate PR. A prepared section does not authorize publication.
+
+   Follow [Common Changelog](https://common-changelog.org/): release headings use
+   the version without `v`, a GitHub Release link, and `YYYY-MM-DD`. The date is
+   the intended UTC calendar date of GitHub Release publication. Sort releases
+   newest first by semantic version; use applicable `Changed`, `Added`, `Removed`,
+   and `Fixed` groups in that order, concise imperative entries with supporting
+   links, and explicit breaking-change markers.
+
+   Before merge, correct version, date, scope, and entries in that same PR with
+   proportionate re-review. This includes crossing UTC midnight when the intended
+   publication day changes. After merge but before tagging, correct through
+   reviewed work and qualify the resulting canonical merged state before tagging.
+   After publication, preserve the published tag and tree and use a reviewed
+   successor correction; any successor release requires its own authorization.
+   A pushed tag with incomplete GitHub Release publication is partial publication:
+   stop and inspect under the publication procedure below, not the pre-tag path.
+3. Select the intended release commit from reviewed, merged work on `main`.
    Record its full commit SHA and check it out for validation. Review the changes
    since the previous release, including documentation, dependency updates, and
-   effects on consumers. Confirm repository CI passes for this commit.
-3. Follow the [setup instructions](README.md#run-checks), then run:
+   effects on consumers. Verify the changelog covers the notable whole-release
+   delta and agrees with the authoritative version, scope, and intended UTC date.
+   Verify other deliberately selected historical artifacts are current for this
+   candidate. Confirm repository CI passes for this commit.
+4. Follow the [setup instructions](README.md#run-checks), then run:
 
    ```sh
    npm run validate
@@ -53,12 +95,13 @@ below. `npm run build:distribution` builds local artifacts only.
    Require passing checks and a clean working tree. If checks fix files or a
    defect needs correction, submit the change through the contribution workflow
    and select and validate the resulting merged commit before proceeding.
-4. Use the unused version recorded in `package.json`; require the tag to be `v`
+5. Recheck the unused version recorded in `package.json`; require the tag to be `v`
    followed by that exact version. Inspect the generated ZIP against the explicit
    payload rule and tests. Check both local and remote tags and existing
    [GitHub Releases](https://github.com/jamesreimer/html-skeleton/releases).
-   Prepare release notes describing the changes, consumer impact, and any
-   adoption steps. Keep the notes outside the checkout so it remains clean.
+   Prepare release notes from the changelog and detailed Git/PR/issue evidence,
+   keeping notable changes consistent and adding release-specific consumer impact
+   and adoption steps. Keep the notes outside the checkout so it remains clean.
 
 ## Create and verify the tag
 
@@ -141,3 +184,8 @@ validated artifact. GitHub source archives do not replace the curated ZIP. Reche
 tag object and peeled commit against the same expected SHAs. If publication
 fails after the tag push, inspect the remote tag and release state before
 retrying; preserve the published tag.
+
+Verify that the UTC calendar date of the actual release `publishedAt` matches the
+changelog heading. If it differs, record the discrepancy and correct through a
+reviewed successor PR. Preserve the published tag and tree; a successor release
+still requires separate release authorization.

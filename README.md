@@ -100,8 +100,9 @@ See [architecture](docs/architecture.md#tooling-boundary) for ownership and exte
 
 Derived from [repo-template](https://github.com/jamesreimer/repo-template), HTML
 Skeleton owns its adapted baseline and retains the inherited [CC0 license](LICENSE).
-No external standards are adopted. Applicable inherited checks and workflow rules
-remain in effect.
+[Common Changelog](https://common-changelog.org/) governs changelog format only;
+no other external standards are adopted. Applicable inherited checks and workflow
+rules remain in effect. See [CHANGELOG.md](CHANGELOG.md) for notable release history.
 
 Use a focused branch and pull request; see [CONTRIBUTING.md](CONTRIBUTING.md) and
 [AGENTS.md](AGENTS.md). Release publication follows [MAINTAINING.md](MAINTAINING.md)

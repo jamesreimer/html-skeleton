@@ -177,18 +177,91 @@ test('site pages receive native validation while explicit fixtures and tooling r
   assert.match(check(cwd, 'check:source-boundary', false), /dist\/about\.html/);
 });
 
-test('.htm is outside the supported page contract', async (t) => {
+test('exact Git-index extensions enforce lowercase independently of filesystem casing', async (t) => {
+  for (const ignoreCase of ['true', 'false']) {
+    const cwd = await fixture(t);
+    git(cwd, 'config', 'core.ignorecase', ignoreCase);
+    const blob = git(cwd, 'hash-object', '-w', '--stdin').trim();
+    const indexPath = (path) => {
+      // No working-tree file is created, even for case-colliding spellings.
+      git(cwd, 'update-index', '--add', '--cacheinfo', '100644', blob, path);
+      assert.ok(git(cwd, 'ls-files', '-z').split('\0').includes(path));
+    };
+    for (const path of [
+      'site/page.html',
+      'site/theme.css',
+      'site/app.webmanifest',
+      'site/nested/page.html',
+      'scripts/tool.js',
+      'docs/diagram.svg',
+      'docs/image.png',
+      'docs/data.json',
+    ])
+      indexPath(path);
+    check(cwd, 'check:source-boundary');
+
+    for (const [path, canonical] of [
+      ['site/page.htm', '.html'],
+      ['site/page.HTML', '.html'],
+      ['site/page.Html', '.html'],
+      ['site/page.HTM', '.html'],
+      ['site/page.Htm', '.html'],
+      ['site/theme.CSS', '.css'],
+      ['site/theme.Css', '.css'],
+      ['site/app.WebManifest', '.webmanifest'],
+      ['site/app.WEBMANIFEST', '.webmanifest'],
+      ['site/nested/page.HTML', '.html'],
+      ['outside.htm', '.html'],
+      ['tests/fixtures/source-boundary.HTML', '.html'],
+      ['tests/fixtures/source-boundary.htm', '.html'],
+    ]) {
+      indexPath(path);
+      // Exercise the real CLI from a nested cwd against exact index spelling.
+      const result = spawnSync(
+        process.execPath,
+        [join(cwd, 'scripts/check-source-boundary.mjs')],
+        { cwd: join(cwd, 'site/assets/css'), encoding: 'utf8' },
+      );
+      assert.equal(result.error, undefined);
+      assert.equal(result.status, 1, result.stderr);
+      assert.ok(result.stderr.includes(JSON.stringify(path)), result.stderr);
+      assert.ok(
+        result.stderr.includes(`requires lowercase ${canonical}`),
+        result.stderr,
+      );
+      assert.match(
+        result.stderr,
+        /consumers may deliberately adapt their copy/,
+      );
+      assert.equal(
+        result.stderr.includes('browser-facing source belongs under site/'),
+        !path.startsWith('site/'),
+        result.stderr,
+      );
+      git(cwd, 'update-index', '--force-remove', '--', path);
+      check(cwd, 'check:source-boundary');
+    }
+    // The canonical fixture still coexists with its rejected case variants.
+    assert.ok(
+      git(cwd, 'ls-files', '-z')
+        .split('\0')
+        .includes('tests/fixtures/source-boundary.html'),
+    );
+  }
+});
+
+test('.htm is rejected without expanding HTML validation or link discovery', async (t) => {
   const cwd = await fixture(t);
-  // Unlinked .htm is neither classified by the boundary guard nor promised
-  // native HTML validation/discovery. Consumers must use lowercase .html.
-  for (const path of ['outside.htm', 'nested/page.HTM', 'site/unlinked.htm'])
-    await put(cwd, path, '<img src="missing.png">\n');
-  check(cwd, 'check:source-boundary');
+  await put(cwd, 'site/unlinked.htm', '<img src="missing.png">\n');
+  assert.match(
+    check(cwd, 'check:source-boundary', false),
+    /requires lowercase \.html/,
+  );
   check(cwd, 'check:html');
   check(cwd, 'check:site-links');
 });
 
-test('canonical validation reports the staged boundary violation', async (t) => {
+test('canonical validation reports staged location and naming violations', async (t) => {
   const cwd = await fixture(t);
   // Exercise the actual launcher/config and content checks once. Regression
   // suites run in the outer validation; rerunning them here adds no coverage
@@ -204,6 +277,7 @@ test('canonical validation reports the staged boundary violation', async (t) => 
   );
   await put(cwd, 'site/pages/about.html', html);
   await put(cwd, 'about.html', html);
+  await put(cwd, 'site/unlinked.htm', html);
   assert.match(
     git(cwd, 'diff', '--cached', '--name-status'),
     /A\s+about\.html/,
@@ -213,6 +287,10 @@ test('canonical validation reports the staged boundary violation', async (t) => 
   assert.match(
     output,
     /"about.html": browser-facing source belongs under site\//,
+  );
+  assert.match(
+    output,
+    /"site\/unlinked.htm": HTML Skeleton requires lowercase \.html/,
   );
   // Ensure the expected guard failure is the only failing hook.
   assert.equal(output.match(/\.{3,}Failed/g)?.length, 1, output);

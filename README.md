@@ -51,11 +51,16 @@ python3 -m http.server 8000 --bind 127.0.0.1 --directory site
 
 ## Run checks
 
-Repository tooling supports Node.js `^22.22.0 || >=24.8.0` (including npm):
-Node 22 from 22.22.0, or Node 24.8.0 and later. Python 3.10 or later is required.
-CI selects Node 24.18.1 and Python 3.12; the isolated Markdown hooks also pin
-Node 24.18.1 independently of the shell's Node version. The Node range fits the
-locked dependencies' engine requirements; it is not an exhaustive test matrix.
+Repository tooling requires Node.js `>=24.22.1 <25` (including npm), enforced
+by `.npmrc` with `engine-strict=true`. CI tests exact Node 24.22.1 and Python 3.12;
+Python 3.10 or later is required for pre-commit. Markdown checks use the same
+root npm installation and shell Node as the other validators.
+
+This narrows the previous Node 22/24 tooling range to patched Node 24 releases.
+Use Node 24.22.1 to reproduce CI; later Node 24 patches are accepted for developer
+copies but are not an exhaustive test matrix. Reassess the minimum and CI pin as
+security updates arrive. The browser-native website requires neither Node nor
+a bundler, including when consumed from the ZIP.
 
 From the repository root:
 

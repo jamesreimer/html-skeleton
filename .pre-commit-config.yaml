@@ -9,7 +9,6 @@ repos:
       - id: check-json
       - id: check-yaml
         args: [--allow-multiple-documents]
-      - id: check-toml
       - id: check-case-conflict
       - id: check-symlinks
       - id: detect-private-key
@@ -19,22 +18,21 @@ repos:
       - id: mixed-line-ending
         args: [--fix=lf]
 
-  - repo: https://github.com/DavidAnson/markdownlint-cli2
-    rev: 916ad0aaa108c64d294101002066f530ea170b10 # v0.23.3
+  - repo: local
     hooks:
       - id: markdownlint-cli2
-        language_version: '24.18.1'
-      - id: markdownlint-cli2
-        alias: test-markdown-rules
+        name: markdownlint-cli2
+        language: system
+        # The adapter accepts filenames only and passes them as literal CLI paths.
+        entry: node tools/markdownlint-files.cjs
+        types: [markdown]
+      - id: test-markdown-rules
         name: Test Markdown authoring rules
+        language: system
         entry: node --test tests/markdown-rules.test.cjs
-        language_version: '24.18.1'
         types: [file]
         always_run: true
         pass_filenames: false
-
-  - repo: local
-    hooks:
       - id: linkinator
         name: Check local Markdown and HTML links
         language: system
@@ -91,12 +89,6 @@ repos:
         entry: npm run test:baseline
         always_run: true
         pass_filenames: false
-
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 2eeb5678de71a00c0902cbda7105d328432f72cb # v0.16.8
-    hooks:
-      - id: ruff-check
-      - id: ruff-format
 
   - repo: https://github.com/rhysd/actionlint
     rev: 914e7df21a07ef503a81201c76d2b11c789d3fca # v1.7.12

@@ -4,6 +4,7 @@ import globals from 'globals';
 export default [
   { ignores: ['dist/**', 'node_modules/**', '.venv/**'] },
   js.configs.recommended,
+  { rules: { eqeqeq: 'error', 'prefer-const': 'error' } },
   {
     files: ['**/*.mjs', '**/*.cjs'],
     languageOptions: { globals: globals.node },

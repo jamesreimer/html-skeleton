@@ -86,6 +86,21 @@ test('native validators accept baseline and reject representative defects', asyn
     ],
     ['check:css', 'site/assets/css/base.css', 'body { colr: red; }\n'],
     ['check:js', 'site/validation-fixture.js', 'missingFunction();\n'],
+    [
+      'check:js',
+      'site/validation-fixture.js',
+      "document.title = window.name == 'example' ? 'Yes' : 'No';\n",
+    ],
+    [
+      'check:js',
+      'site/validation-fixture.js',
+      "let title = 'Example';\ndocument.title = title;\n",
+    ],
+    [
+      'check:js',
+      'site/validation-fixture.js',
+      "/* eslint no-console: warn */\nconsole.log('Warning must fail');\n",
+    ],
     ['check:format', 'site/validation-fixture.js', 'const   value = 1\n'],
   ];
   for (const [script, file, invalid] of cases) {

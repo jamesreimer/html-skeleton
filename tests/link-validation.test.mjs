@@ -2,10 +2,11 @@ import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
 import {mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
-import {dirname, join, resolve} from 'node:path';
+import {dirname, join, resolve, posix, win32} from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
 import {test} from 'node:test';
+import {repositoryIdentity, pageIdentity} from '../tools/requested-file-identity.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const cli = join(root, 'tools/check-links.mjs');
@@ -23,6 +24,7 @@ function fixture(t, files) {
     mkdirSync(dirname(join(dir, name)), {recursive: true});
     writeFileSync(join(dir, name), content);
   }
+  assert.equal(spawnSync("git", ["init", "--quiet"], {cwd: dir}).status, 0);
   return dir;
 }
 function run(dir, paths, mode) {
@@ -32,7 +34,7 @@ function run(dir, paths, mode) {
       env: {...process.env, LINK_TEST_CONTROL: mode || ''}});
   assert.ifError(result.error);
   assert.equal(result.signal, null);
-  return result;
+  return { ...result, output: result.stdout + result.stderr };
 }
 for (const c of contract.cases) {
   test(`Link contract: ${c.name}`, t => {
@@ -193,4 +195,205 @@ test('native directory control: default rejects, directory listing accepts', t =
     assert.equal(link.status, enabled ? 200 : 404);
     assert.equal(link.state, enabled ? 'OK' : 'BROKEN');
   }
+});
+
+// These are literal argv values, not shell patterns. Unsupported selections
+// must fail closed; successful literal-file support remains an upstream concern.
+const requestedPathCases = [
+  { name: "ordinary.md", validStatus: 0, brokenStatus: 1 },
+  { name: "nested/deeper/new.md", validStatus: 0, brokenStatus: 1 },
+  { name: "with space.md", validStatus: 0, brokenStatus: 1 },
+  { name: "!bang.md", validStatus: 0, brokenStatus: 1 },
+  {
+    name: "choice{a,b}.md",
+    decoy: "choicea.md",
+    validStatus: 2,
+    brokenStatus: 2,
+  },
+  { name: "meta[ab].md", decoy: "metaa.md", validStatus: 2, brokenStatus: 2 },
+  { name: "plus+(a).md", decoy: "plusa.md", validStatus: 2, brokenStatus: 2 },
+  { name: "#hash.md", validStatus: 2, brokenStatus: 2 },
+  { name: "percent%23.md", validStatus: 1, brokenStatus: 1 },
+  // Windows forbids these characters in filenames, not the other matrix cases.
+  ...(process.platform === "win32"
+    ? []
+    : [
+        {
+          name: "star*.md",
+          decoy: "star-decoy.md",
+          validStatus: 2,
+          brokenStatus: 1,
+        },
+        {
+          name: "question?.md",
+          decoy: "questionx.md",
+          validStatus: 1,
+          brokenStatus: 1,
+        },
+        {
+          name: "at@(a|b).md",
+          decoy: "ata.md",
+          validStatus: 2,
+          brokenStatus: 2,
+        },
+      ]),
+];
+for (const entry of requestedPathCases) {
+  test(`requested-file attestation: ${entry.name}`, (t) => {
+    const files = { [entry.name]: "# Source\n" };
+    if (entry.decoy) files[entry.decoy] = "# Decoy\n";
+    const dir = fixture(t, files);
+    for (const broken of [false, true]) {
+      const content = "# Source\n" + (broken ? "\n[missing](absent.md)\n" : "");
+      writeFileSync(join(dir, entry.name), content);
+      const result = run(dir, [entry.name]);
+      assert.equal(
+        result.status,
+        broken ? entry.brokenStatus : entry.validStatus,
+        result.output,
+      );
+      if (result.status === 2) {
+        assert.match(result.stderr, /Requested-file attestation failed/);
+        assert.ok(result.stderr.includes(entry.name), result.stderr);
+        assert.equal(result.stdout, "");
+      } else if (result.status === 0) {
+        const report = JSON.parse(result.stdout);
+        assert.deepEqual(
+          report.result.links.map((link) => decodeURIComponent(link.url)),
+          [entry.name],
+        );
+      }
+      assert.equal(readFileSync(join(dir, entry.name), "utf8"), content);
+    }
+    rmSync(join(dir, entry.name));
+    const missing = run(dir, [entry.name]);
+    assert.equal(missing.status, 2, missing.stdout + missing.stderr);
+    assert.match(missing.stderr, /Requested-file attestation failed/);
+    assert.ok(missing.stderr.includes(entry.name), missing.stderr);
+  });
+}
+
+test("requested-file attestation: batches, duplicate inputs and linked targets", (t) => {
+  const dir = fixture(t, {
+    "first.md":
+      "# First\n\n[target](target.md#target)\n[redirect](docs)\n[external](https://example.invalid/)\n",
+    "second.md": "# Second\n",
+    "target.md": "# Target\n",
+    "docs/index.html": "<h1>Directory</h1>\n",
+    "choice{a,b}.md": "# Source\n\n[missing](absent.md)\n",
+    "choicea.md": "# Decoy\n",
+    "#hash.md": "# Source\n\n[missing](absent.md)\n",
+  });
+  for (const paths of [
+    ["first.md", "second.md"],
+    ["second.md", "first.md"],
+    ["first.md", "./first.md"],
+  ]) {
+    const result = run(dir, paths);
+    assert.equal(result.status, 0, result.output);
+    const links = JSON.parse(result.stdout).result.links;
+    assert.ok(
+      links.some((link) => link.url === "target.md" && link.state === "OK"),
+    );
+    assert.ok(
+      links.some(
+        (link) =>
+          link.url === "https://example.invalid/" && link.state === "SKIPPED",
+      ),
+    );
+  }
+  for (const name of ["choice{a,b}.md", "#hash.md"]) {
+    const result = run(dir, ["second.md", name]);
+    assert.equal(result.status, 2, result.output);
+    assert.match(result.stderr, /Requested-file attestation failed/);
+    assert.ok(result.stderr.includes(name), result.stderr);
+  }
+});
+
+test("requested-file attestation: URL decoding cannot substitute a sibling", (t) => {
+  for (const [requested, decoy] of [
+    ["percent%23.md", "percent#.md"],
+    ["percent%2Fname.md", "percent/name.md"],
+  ]) {
+    const dir = fixture(t, {
+      [requested]: "# Source\n\n[missing](absent.md)\n",
+      [decoy]: "# Decoy\n",
+    });
+    const result = run(dir, [requested]);
+    assert.equal(result.status, 2, result.output);
+    assert.match(result.stderr, /Requested-file attestation failed/);
+    assert.ok(result.stderr.includes(requested), result.stderr);
+    assert.equal(result.stdout, "");
+  }
+});
+
+for (const [platform, paths, root] of [
+  ["POSIX", posix, "/repo"],
+  ["Windows", win32, "C:\\repo"],
+]) {
+  test(`requested-file identity normalization: ${platform}`, () => {
+    const origin = "http://127.0.0.1:12345";
+    for (const [file, encoded] of [
+      ["nested/space café.md", "nested/space%20caf%C3%A9.md"],
+      ["nested/#hash.md", "nested/%23hash.md"],
+      ["percent%23.md", "percent%2523.md"],
+    ]) {
+      assert.equal(
+        pageIdentity(root, `${origin}/${encoded}`, origin, paths),
+        repositoryIdentity(root, file, paths),
+      );
+    }
+    assert.notEqual(
+      pageIdentity(root, `${origin}/source.md?query#fragment`, origin, paths),
+      repositoryIdentity(root, "source.md?query#fragment", paths),
+    );
+    assert.throws(
+      () => pageIdentity(root, `${origin}/bad%2Fname.md`, origin, paths),
+      /ambiguous/,
+    );
+    assert.throws(
+      () => pageIdentity(root, `${origin}/bad%00name.md`, origin, paths),
+      /ambiguous/,
+    );
+    assert.throws(
+      () => pageIdentity(root, `${origin}/bad%zz.md`, origin, paths),
+      URIError,
+    );
+    assert.throws(
+      () =>
+        pageIdentity(root, "http://example.invalid/source.md", origin, paths),
+      /nonlocal/,
+    );
+    assert.throws(
+      () => repositoryIdentity(root, "../outside.md", paths),
+      /outside repository/,
+    );
+    if (platform === "Windows") {
+      assert.equal(
+        repositoryIdentity(root, "nested\\file.md", paths),
+        repositoryIdentity(root, "nested/file.md", paths),
+      );
+      assert.throws(
+        () => pageIdentity(root, `${origin}/C:/outside.md`, origin, paths),
+        /outside repository/,
+      );
+      assert.throws(
+        () => pageIdentity(root, `${origin}/bad%5Cname.md`, origin, paths),
+        /ambiguous/,
+      );
+      assert.throws(
+        () => repositoryIdentity(root, "D:\\outside.md", paths),
+        /outside repository/,
+      );
+    }
+  });
+}
+
+
+test('requested-file attestation preserves non-site HTML and fragments', t => {
+  const valid = '<h1 id="present">Title</h1><a href="#present">Body</a>\n';
+  const dir = fixture(t, {'docs/example.html': valid});
+  assert.equal(run(dir, ['docs/example.html']).status, 0);
+  writeFileSync(join(dir, 'docs/example.html'), valid.replace('href="#present"', 'href="#absent"'));
+  assert.equal(run(dir, ['docs/example.html']).status, 1);
 });

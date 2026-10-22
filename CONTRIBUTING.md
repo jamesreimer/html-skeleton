@@ -132,7 +132,7 @@ serving tests derive their expectations from it. Update that declaration for
 intentional payload changes rather than editing independent file lists in tests.
 
 Markdown rules live
-in `.markdownlint-cli2.jsonc`; Python rules live in `ruff.toml`. Use the tools'
+in `.markdownlint-cli2.jsonc`. Use the tools'
 native configuration when project requirements change. Make exclusions explicit
 and explain substantive coverage reductions in the pull request.
 
@@ -151,6 +151,16 @@ markdownlint's micromark tokens to require explicit fence closure; it neither
 parses Markdown independently nor chooses a closing position automatically.
 Working symbolic links are allowed.
 
+The Markdown hook passes selected paths through `tools/markdownlint-files.cjs`
+using CLI2's literal-file marker, without shell or glob expansion. Repository
+link checking attests that every requested file actually began a scan. Missing,
+outside-root, or ambiguously interpreted paths fail closed; Linkinator cannot
+currently validate every glob/URL-special filename literally. Rename such a
+file or qualify upstream support; do not interpret a zero-file scan as success.
+The always-run web commands receive no pre-commit filenames. Any future
+filename-driven hook must invoke its installed executable directly and prove
+literal argv handling with invalid selected files and valid decoys.
+
 Directory destinations use Linkinator's native directory listings and do not
 require an `index.html`. Missing directories still fail. If an `index.html` is
 present, Linkinator checks its fragments; generated listings do not expose an
@@ -161,7 +171,7 @@ When changing a check or its scope, verify both that representative defects fail
 and that representative valid files pass in an isolated Git repository. Include
 new-file selection and the full CI command where relevant. The suite includes
 `tests/markdown-rules.test.cjs`, which exercises the local rule through the
-installed CLI and actual configuration in the same isolated hook environment.
+root-installed CLI and actual configuration used by the ordinary hook.
 Keep embedded Markdown examples, container boundaries, opening-line locations,
 and no-autofix behavior covered when updating the rule or its parser dependency.
 Projects should add tests for the additional behavior they own.
@@ -183,7 +193,8 @@ locally and in CI. The lock preserves the full dependency resolution;
 pre-commit `additional_dependencies` cannot provide that transitive lock.
 The startup probe is still required: correctness must not depend on hoisting.
 Update pins and lock together, then run the regression suite and ordinary checks.
-Keep the test Markdownlint version aligned with its existing pre-commit hook.
+The Markdown hook and its tests share the root-locked Markdownlint CLI; no
+separate pre-commit Node environment is installed.
 
 Dependabot proposes GitHub Actions, Python requirements, and npm dependency
 updates monthly. Hook revisions remain covered by `pre-commit autoupdate`.

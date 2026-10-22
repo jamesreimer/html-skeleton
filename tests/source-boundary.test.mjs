@@ -52,7 +52,7 @@ const fixtureInputs = [
   '.stylelintrc.json',
   'eslint.config.mjs',
   '.markdownlint-cli2.jsonc',
-  'ruff.toml',
+  '.npmrc',
   'markdownlint-rules',
   'scripts/validate.mjs',
   'scripts/check-source-boundary.mjs',
@@ -63,6 +63,8 @@ const fixtureInputs = [
   'tests/baseline.test.mjs',
   'tests/fixtures/source-boundary.html',
   'tools/check-links.mjs',
+  'tools/requested-file-identity.mjs',
+  'tools/markdownlint-files.cjs',
   'tools/link-frontmatter.mjs',
 ];
 async function exportIndex(t, source, paths = []) {

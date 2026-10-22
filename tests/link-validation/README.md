@@ -51,3 +51,9 @@ Link diagnostics retain original filenames and display text. Linkinator does
 not promise Markdown line/column positions. YAML snippets use metadata-relative
 positions; malformed files remain named as failed local results. The batch
 regression test verifies that both original failing filenames are reported.
+
+Requested-file cases cover literal filenames, glob decoys, missing inputs,
+batches, duplicate inputs, URL-decoded siblings, and POSIX/Windows identity
+normalization. Linkinator must attest each initial requested file before a
+successful result is accepted; unsupported literal filenames fail closed.
+Linked targets and directory redirects remain separate from initial selection.
